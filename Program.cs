@@ -1,4 +1,5 @@
 ﻿using Avalonia;
+using Avalonia.ReactiveUI;
 using System;
 
 namespace ExifEditor;
@@ -18,6 +19,7 @@ class Program
             .UsePlatformDetect()
             .WithInterFont()
             .LogToTrace()
+            .UseReactiveUI()
             .With(new X11PlatformOptions
             {
                 UseDBusFilePicker = false // to disable FreeDesktop file picker
