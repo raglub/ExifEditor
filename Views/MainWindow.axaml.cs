@@ -3,6 +3,7 @@ using System.IO;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using ExifEditor.ViewModels;
 using ExifLibrary;
 
 namespace ExifEditor.Views;
@@ -11,36 +12,32 @@ public partial class MainWindow : Window
 {   
     public static MainWindow? mainWindow;
 
-    private readonly AppSettings appSettings;
     public MainWindow()
     {
         InitializeComponent();
-        appSettings = SettingsService.LoadSettings();
-        DirPath.Text = appSettings.DirPath;
         mainWindow = this;
     }
 
     private void OnButtonClick(object sender, RoutedEventArgs e)
     {
-        string filePath = Path.Combine(appSettings.DirPath, "img.jpg");
+        //string filePath = Path.Combine(appSettings.DirPath, "img.jpg");
 
-        var file = ImageFile.FromFile(filePath);
-        var description = (string)file.Properties.Get(ExifTag.ImageDescription).Value;
-        outputText.Text = description;
+        //var file = ImageFile.FromFile(filePath);
+        //var description = (string)file.Properties.Get(ExifTag.ImageDescription).Value;
+        //outputText.Text = description;
     }
 
     private async void OnSelectDirectoryClick(object sender, RoutedEventArgs e)
     {
+        var viewModel = DataContext as MainWindowViewModel;
         var result = await new OpenFolderDialog()
         {
             Title = "Select folder",
-            Directory = appSettings.DirPath,
+            Directory = viewModel.DirPath,
         }.ShowAsync(mainWindow);
 
         if (!string.IsNullOrEmpty(result)) {
-            DirPath.Text = result;
-            appSettings.DirPath = result;
-            SettingsService.SaveSettings(appSettings);
+            viewModel.DirPath = result;
         }
     }
 }

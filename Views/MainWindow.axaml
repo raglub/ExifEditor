@@ -2,9 +2,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:ExifEditor.ViewModels"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:DataType="vm:MainWindowViewModel"
         x:Class="ExifEditor.Views.MainWindow"
         Title="ExifEditor">
+    <Design.DataContext>
+        <!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
     <Grid Margin="10" Background="#EEEEEE">
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
@@ -18,7 +26,7 @@
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="100"/>
         </Grid.ColumnDefinitions>
-        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" x:Name="DirPath" HorizontalAlignment="Left" VerticalAlignment="Top" Text="- none -"/>
+        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding DirPath}"/>
         <Button Grid.Row="0" Grid.Column="3" Content="Select Directory" Background="Orange" Click="OnSelectDirectoryClick"/>
         <Button Grid.Row="1" Grid.Column="0" Click="OnButtonClick">Show</Button>
         <TextBlock Grid.Row="1" Grid.Column="1" x:Name="outputText" HorizontalAlignment="Left" VerticalAlignment="Top"/>
