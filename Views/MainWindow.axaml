@@ -27,8 +27,8 @@
             <ColumnDefinition Width="100"/>
         </Grid.ColumnDefinitions>
         <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding DirPath}"/>
-        <Button Grid.Row="0" Grid.Column="3" Content="Select Directory" Background="Orange" Click="OnSelectDirectoryClick"/>
-        <Button Grid.Row="1" Grid.Column="0" Click="OnButtonClick">Show</Button>
-        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="outputText" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <Button Grid.Row="0" Grid.Column="3" Content="Select Directory" Background="Orange" Command="{Binding SelectDirectoryCommand }"/>
+        <Button Grid.Row="1" Grid.Column="0" Command="{Binding ShowExifCommand}">Show</Button>
+        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ExifDescription}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
     </Grid>
 </Window>
