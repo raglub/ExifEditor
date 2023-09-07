@@ -8,6 +8,8 @@ using ExifLibrary;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using System.IO;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace ExifEditor.ViewModels;
 
@@ -16,11 +18,25 @@ public class MainWindowViewModel : ViewModelBase
     private readonly AppSettings appSettings;
 
     private string? _exifDescription;
-    public ICommand _selectDirectoryCommand;
-    public ICommand _showExifCommand;
+    public ICommand? _selectDirectoryCommand;
+    public ImageViewModel? _selectedImage;
+    public ICommand? _showExifCommand;
+
+    public ObservableCollection<ImageViewModel> Images { get;} = new ObservableCollection<ImageViewModel>();
 
     public MainWindowViewModel() {
         appSettings = SettingsService.LoadSettings();
+        if (appSettings.DirPath is object) {
+            var filePaths = Directory.GetFiles(appSettings.DirPath);
+            foreach(var filePath in filePaths) {
+                if (Path.GetExtension(filePath) == ".jpg") {
+                    Images.Add(new ImageViewModel {
+                        Path = filePath,
+                        FileName = Path.GetFileName(filePath)
+                    });
+                }
+            }
+        }
     }
 
     public ICommand SelectDirectoryCommand {
@@ -56,6 +72,19 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
+    public ImageViewModel? SelectedImage
+    {
+
+        get {
+
+            return _selectedImage;
+        }
+        set {
+            _selectedImage = value;
+            
+        }
+    }
+
     public string DirPath
     {
         get
@@ -79,6 +108,5 @@ public class MainWindowViewModel : ViewModelBase
         {
             this.RaiseAndSetIfChanged(ref _exifDescription, value);
         }
-
     }    
 }
