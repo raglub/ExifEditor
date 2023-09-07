@@ -30,5 +30,14 @@
         <Button Grid.Row="0" Grid.Column="3" Content="Select Directory" Background="Orange" Command="{Binding SelectDirectoryCommand }"/>
         <Button Grid.Row="1" Grid.Column="0" Command="{Binding ShowExifCommand}">Show</Button>
         <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ExifDescription}" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <ListBox ItemsSource="{Binding Images}" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Border Background="LightGray" CornerRadius="4" Padding="4">
+                        <TextBlock Text="{Binding FileName}"/>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
     </Grid>
 </Window>
