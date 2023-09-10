@@ -11,6 +11,13 @@ using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
+using System.Net.Http;
+using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
+
+
 namespace ExifEditor.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
@@ -72,6 +79,24 @@ public class MainWindowViewModel : ViewModelBase
         }
     }
 
+    #region Properties
+
+    public string? SelectedFileName
+    {
+
+        get {
+
+            return _selectedImage?.FileName;
+        }
+    }
+
+    public Bitmap? SelectedImageBitmap { 
+        get
+        {
+            return SelectedImage?.ImageBitmap;
+        }
+    }
+
     public ImageViewModel? SelectedImage
     {
 
@@ -81,7 +106,12 @@ public class MainWindowViewModel : ViewModelBase
         }
         set {
             _selectedImage = value;
-            
+            appSettings.SelectedFilePath = value?.Path;
+            SettingsService.SaveSettings(appSettings);
+
+            this.RaisePropertyChanged(nameof(SelectedImage));
+            this.RaisePropertyChanged(nameof(SelectedFileName));
+            this.RaisePropertyChanged(nameof(SelectedImageBitmap));
         }
     }
 
@@ -108,5 +138,6 @@ public class MainWindowViewModel : ViewModelBase
         {
             this.RaiseAndSetIfChanged(ref _exifDescription, value);
         }
-    }    
+    }
+    #endregion    
 }
