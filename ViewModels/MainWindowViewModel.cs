@@ -4,7 +4,6 @@ using ReactiveUI;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using ExifEditor.ViewModels;
-using ExifLibrary;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using System.IO;
@@ -24,7 +23,6 @@ public class MainWindowViewModel : ViewModelBase
 {
     private readonly AppSettings appSettings;
 
-    private string? _exifDescription;
     public ICommand? _selectDirectoryCommand;
     public ImageViewModel? _selectedImage;
     public ICommand? _showExifCommand;
@@ -38,7 +36,7 @@ public class MainWindowViewModel : ViewModelBase
             foreach(var filePath in filePaths) {
                 if (Path.GetExtension(filePath) == ".jpg") {
                     Images.Add(new ImageViewModel {
-                        Path = filePath,
+                        FilePath = filePath,
                         FileName = Path.GetFileName(filePath)
                     });
                 }
@@ -63,19 +61,6 @@ public class MainWindowViewModel : ViewModelBase
                 }
             });
             return _selectDirectoryCommand;
-        }
-    }
-
-    public ICommand ShowExifCommand {
-        get {
-            _showExifCommand = _showExifCommand ?? ReactiveCommand.CreateFromTask(async () =>
-            {
-                string filePath = Path.Combine(DirPath, "img.jpg");
-                var file = ImageFile.FromFile(filePath);
-                var description = (string)file.Properties.Get(ExifTag.ImageDescription).Value;
-                ExifDescription = description;
-            });
-            return _showExifCommand;
         }
     }
 
@@ -106,12 +91,14 @@ public class MainWindowViewModel : ViewModelBase
         }
         set {
             _selectedImage = value;
-            appSettings.SelectedFilePath = value?.Path;
+            appSettings.SelectedFilePath = value?.FilePath;
             SettingsService.SaveSettings(appSettings);
-
+    
             this.RaisePropertyChanged(nameof(SelectedImage));
             this.RaisePropertyChanged(nameof(SelectedFileName));
             this.RaisePropertyChanged(nameof(SelectedImageBitmap));
+            this.RaisePropertyChanged(nameof(ExifDescription));
+            this.RaisePropertyChanged(nameof(ExifAuthor));
         }
     }
 
@@ -132,11 +119,15 @@ public class MainWindowViewModel : ViewModelBase
     {
         get 
         {
-            return _exifDescription;
+            return SelectedImage?.Description;
         }
-        set 
+    }
+
+    public string? ExifAuthor
+    {
+        get 
         {
-            this.RaiseAndSetIfChanged(ref _exifDescription, value);
+            return SelectedImage?.Artist;
         }
     }
     #endregion    
