@@ -9,13 +9,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-
-using System.Net.Http;
-using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
-
 
 namespace ExifEditor.ViewModels;
 
@@ -66,22 +60,6 @@ public class MainWindowViewModel : ViewModelBase
 
     #region Properties
 
-    public string? SelectedFileName
-    {
-
-        get {
-
-            return _selectedImage?.FileName;
-        }
-    }
-
-    public Bitmap? SelectedImageBitmap { 
-        get
-        {
-            return SelectedImage?.ImageBitmap;
-        }
-    }
-
     public ImageViewModel? SelectedImage
     {
 
@@ -93,12 +71,7 @@ public class MainWindowViewModel : ViewModelBase
             _selectedImage = value;
             appSettings.SelectedFilePath = value?.FilePath;
             SettingsService.SaveSettings(appSettings);
-    
             this.RaisePropertyChanged(nameof(SelectedImage));
-            this.RaisePropertyChanged(nameof(SelectedFileName));
-            this.RaisePropertyChanged(nameof(SelectedImageBitmap));
-            this.RaisePropertyChanged(nameof(ExifDescription));
-            this.RaisePropertyChanged(nameof(ExifAuthor));
         }
     }
 
@@ -112,22 +85,6 @@ public class MainWindowViewModel : ViewModelBase
             appSettings.DirPath = value;
             SettingsService.SaveSettings(appSettings);
             this.RaisePropertyChanged(nameof(DirPath));
-        }
-    }
-
-    public string? ExifDescription
-    {
-        get 
-        {
-            return SelectedImage?.Description;
-        }
-    }
-
-    public string? ExifAuthor
-    {
-        get 
-        {
-            return SelectedImage?.Artist;
         }
     }
     #endregion    

@@ -25,14 +25,14 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
         <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="{Binding DirPath}"/>
-        <Button Grid.Row="0" Grid.Column="3" Content="Select Directory" Background="Orange" Command="{Binding SelectDirectoryCommand }"/>
+        <Button Grid.Row="0" Grid.Column="3" Content="Select Directory" Background="Orange" Command="{Binding SelectDirectoryCommand }" HorizontalAlignment="Right"/>
         <ListBox ItemsSource="{Binding Images}" SelectedItem="{Binding SelectedImage}" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Border Background="LightGray" CornerRadius="4" Padding="4">
                         <Grid>
                             <TextBlock Text="{Binding FileName}"/>
-                            <Image Source="{Binding ImageBitmap}" Width="200" Height="200" />
+                            <Image Source="{Binding ImageBitmap}" Width="200" Height="100" />
                         </Grid>
                     </Border>
                 </DataTemplate>
@@ -44,25 +44,32 @@
           Grid.Column="2" Grid.Row="2"
           Margin="5"
           Padding="15">
-        <Grid>
+        <Grid DataContext="{Binding SelectedImage}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="30"/>
+                <RowDefinition Height="200"/>
+                <RowDefinition Height="30"/>
+                <RowDefinition Height="30"/>
                 <RowDefinition Height="100"/>
-                <RowDefinition Height="30"/>
-                <RowDefinition Height="30"/>
+                <RowDefinition Height="40"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="100"/>
+                <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="0" Grid.Row="0" FontWeight="Bold" Content="File Name"/>
-            <Label Grid.Column="1" Grid.Row="0" Content="{Binding SelectedFileName}"/>
-            <Image Grid.Column="0" Grid.Row="1" Margin="5" Grid.ColumnSpan="2" Source="{Binding SelectedImageBitmap}" Height="100" />
-            <Label Grid.Column="0" Grid.Row="2" FontWeight="Bold" Content="Author" VerticalAlignment="Center"/>
-            <TextBox Grid.Column="1" Grid.Row="2" Text="{Binding ExifAuthor}"/>
-            <Label Grid.Column="0" Grid.Row="3" FontWeight="Bold" Content="Description" VerticalAlignment="Center"/>
-            <TextBox Grid.Column="1" Grid.Row="3" Text="{Binding ExifDescription}"/>
+            <Label Grid.Row="0" Grid.Column="0" FontWeight="Bold" Content="File Name:"/>
+            <Label Grid.Row="0" Grid.Column="1" Content="{Binding FileName}"/>
+            <Image Grid.Row="1" Grid.Column="0" Margin="5" Grid.ColumnSpan="2" Source="{Binding ImageBitmap}" Height="200" />            
+            <Label Grid.Row="3" Grid.Column="0" FontWeight="Bold" Content="Artist:" VerticalAlignment="Center"/>
+            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Artist}"/>
+            <Label Grid.Row="4" Grid.Column="0" FontWeight="Bold" Content="Description:" Margin="0 5 0 0" VerticalAlignment="Top"/>
+            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Description}" Margin="0 5 0 0" AcceptsReturn="True"/>
+            
+            <Button Grid.Row="5" Grid.Column="1" Content="Save" Background="Orange" Padding="10 5" Margin="0 5" Command="{Binding SaveCommand }" HorizontalAlignment="Right"/>
+
+            <Label Grid.Row="6" Grid.Column="0" FontWeight="Bold" Content="Properties:" Margin="0 5 0 0" VerticalAlignment="Top"/>
+            <ListBox Grid.Row="6" Grid.Column="1" ItemsSource="{Binding ImageProperties}"/>
         </Grid>
         </Border>
     </Grid>
