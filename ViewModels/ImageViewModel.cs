@@ -16,6 +16,7 @@ public class ImageViewModel : ViewModelBase
 {
     public ICommand? _saveCommand;
 
+    private Bitmap? _bitmap;
     public string? _filePath;
     public string? FileName { get; set; }
 
@@ -77,12 +78,23 @@ public class ImageViewModel : ViewModelBase
 
     public string? Description {get; set;}
 
-    public Bitmap? ImageBitmap { 
+    public Bitmap? Thumbnail { 
         get
         {
+            if (_bitmap == null) {
+                var file = File.OpenRead(FilePath);
+                _bitmap = Bitmap.DecodeToWidth(file, 200);
+            }
+            return _bitmap;
+        }
+    }
+
+    public Bitmap? ImageBitmap { 
+        get
+        {   
             return new Bitmap(FilePath);
         }
-    }   
-
+    }
+       
     public ObservableCollection<string> ImageProperties {get; set;} = new ObservableCollection<string>();
 }
