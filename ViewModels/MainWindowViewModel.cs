@@ -28,11 +28,15 @@ public class MainWindowViewModel : ViewModelBase
         if (appSettings.DirPath is object) {
             var filePaths = Directory.GetFiles(appSettings.DirPath);
             foreach(var filePath in filePaths) {
-                if (Path.GetExtension(filePath) == ".jpg") {
+                if (Path.GetExtension(filePath) == ".jpg" || Path.GetExtension(filePath) == ".png") {
                     Images.Add(new ImageViewModel {
                         FilePath = filePath,
                         FileName = Path.GetFileName(filePath)
                     });
+                    if (SelectedImage == null) {
+                        SelectedImage = Images[0];
+
+                    }
                 }
             }
         }
