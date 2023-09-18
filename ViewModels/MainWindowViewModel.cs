@@ -10,6 +10,7 @@ using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 
 namespace ExifEditor.ViewModels;
 
