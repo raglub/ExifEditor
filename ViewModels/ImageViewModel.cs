@@ -6,8 +6,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using ExifEditor.Views;
 using ExifLibrary;
 using ReactiveUI;
 
@@ -20,8 +22,16 @@ public class ImageViewModel : ViewModelBase
     private string? _filePath;
     private bool _isModified = false;
     private Bitmap? _largerThumbnail;
+    private Bitmap? _originalBitmap;
     public ICommand? _saveCommand;
+    public ICommand? _showFullImageCommand;
+    public ICommand? _useSavedArtistCommand;
     public string? _title;
+    public MainWindowViewModel? _mainWindow;
+
+    public ImageViewModel(MainWindowViewModel window) {
+        _mainWindow = window;
+    }
 
     private void SetValueOfTag(ImageFile file, ExifTag tag, string? value){
         if (string.IsNullOrEmpty(value)) {
@@ -46,6 +56,30 @@ public class ImageViewModel : ViewModelBase
                 IsModified = false;
             });
             return _saveCommand;
+        }
+    }
+
+    public ICommand ShowFullImageCommand {
+        get {;
+            _showFullImageCommand = _showFullImageCommand ?? ReactiveCommand.CreateFromTask(async () =>
+            {
+                var window = new ImageWindow();
+                window.DataContext = this;
+                window.Height = 500;
+                window.Width = 1000;
+                window.Show();
+            });
+            return _showFullImageCommand;
+        }
+    }
+
+    public ICommand UseSavedArtistCommand {
+        get {;
+            _useSavedArtistCommand = _useSavedArtistCommand ?? ReactiveCommand.CreateFromTask(async () =>
+            {
+                Artist = _mainWindow?.SavedArtist;
+            });
+            return _useSavedArtistCommand;
         }
     }
 
@@ -133,6 +167,17 @@ public class ImageViewModel : ViewModelBase
                 _largerThumbnail = Bitmap.DecodeToHeight(file, 300);
             }
             return _largerThumbnail;
+        }
+    }
+
+    public Bitmap? OriginalBitmap { 
+        get
+        {
+            if (_originalBitmap == null && FilePath is object) {
+                var file = File.OpenRead(FilePath);
+                _originalBitmap = new Bitmap(file);
+            }
+            return _originalBitmap;
         }
     }
 

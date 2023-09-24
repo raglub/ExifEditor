@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace ExifEditor.ViewModels;
 
@@ -27,18 +29,23 @@ public class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel() {
         appSettings = SettingsService.LoadSettings();
         if (appSettings.DirPath is object) {
-            var filePaths = Directory.GetFiles(appSettings.DirPath);
+            var filePaths = Directory.GetFiles(appSettings.DirPath).ToList();
+            filePaths.Sort();
             foreach(var filePath in filePaths) {
                 if (Path.GetExtension(filePath) == ".jpg" || Path.GetExtension(filePath) == ".png") {
-                    Images.Add(new ImageViewModel {
+                    var image = new ImageViewModel(this) {
                         FilePath = filePath,
                         FileName = Path.GetFileName(filePath)
-                    });
-                    if (SelectedImage == null) {
-                        SelectedImage = Images[0];
+                    };
+                    Images.Add(image);
+                    if (filePath == appSettings.SelectedFilePath) {
 
+                        SelectedImage = image;
                     }
                 }
+            }
+            if (Images.Count > 0 && SelectedImage == null) {
+                SelectedImage = Images[0];
             }
         }
     }
@@ -90,6 +97,19 @@ public class MainWindowViewModel : ViewModelBase
             appSettings.DirPath = value;
             SettingsService.SaveSettings(appSettings);
             this.RaisePropertyChanged(nameof(DirPath));
+        }
+    }
+
+    public string? SavedArtist
+    {
+        get
+        {
+            return appSettings?.SavedArtist ?? "";
+        }
+        set {
+            appSettings.SavedArtist = value;
+            SettingsService.SaveSettings(appSettings);
+            this.RaisePropertyChanged(nameof(SavedArtist));
         }
     }
     #endregion    

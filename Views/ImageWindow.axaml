@@ -1,0 +1,8 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ExifEditor.Views.ImageWindow"
+        xmlns:vm="using:ExifEditor.ViewModels"
+        x:DataType="vm:ImageViewModel"
+        Title="Image Window">
+    <Image Source="{Binding OriginalBitmap}" Stretch="Uniform" />
+</Window>
