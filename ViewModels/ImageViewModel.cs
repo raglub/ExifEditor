@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
@@ -41,7 +42,9 @@ public class ImageViewModel : ViewModelBase
         } 
         else 
         {
-            file.Properties.Set(tag, value);
+            var realLength = Encoding.UTF8.GetBytes(value).Length;
+            var extendedValue = value.PadRight(realLength, ' ');
+            file.Properties.Set(tag, extendedValue);
         }
     }
 
@@ -65,7 +68,7 @@ public class ImageViewModel : ViewModelBase
             {
                 var window = new ImageWindow();
                 window.DataContext = this;
-                window.Height = 500;
+                window.Height = 700;
                 window.Width = 1000;
                 window.Show();
             });
@@ -101,6 +104,7 @@ public class ImageViewModel : ViewModelBase
                     Artist = (string)file.Properties.Get(ExifTag.Artist).Value;
                     this.RaisePropertyChanged(nameof(Artist));
                 }
+
                 IsModified = false;
                 foreach(var property in file.Properties) {
                     if (property.Name == nameof(ExifTag.Artist) || property.Name == nameof(ExifTag.ImageDescription)) {
