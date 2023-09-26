@@ -3,6 +3,8 @@
         x:Class="ExifEditor.Views.ImageWindow"
         xmlns:vm="using:ExifEditor.ViewModels"
         x:DataType="vm:ImageViewModel"
-        Title="Image Window">
-    <Image Source="{Binding OriginalBitmap}" Stretch="Uniform" />
+        Title="{Binding FileName}">
+        <ScrollViewer IsVisible="true">
+             <Image Source="{Binding OriginalBitmap}"/>
+        </ScrollViewer>
 </Window>

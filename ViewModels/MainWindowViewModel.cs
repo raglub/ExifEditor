@@ -13,104 +13,110 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace ExifEditor.ViewModels;
 
 public class MainWindowViewModel : ViewModelBase
 {
-    private readonly AppSettings appSettings;
-
-    public ICommand? _selectDirectoryCommand;
-    public ImageViewModel? _selectedImage;
-    public ICommand? _showExifCommand;
-
-    public ObservableCollection<ImageViewModel> Images { get;} = new ObservableCollection<ImageViewModel>();
-
-    public MainWindowViewModel() {
-        appSettings = SettingsService.LoadSettings();
-        if (appSettings.DirPath is object) {
-            var filePaths = Directory.GetFiles(appSettings.DirPath).ToList();
-            filePaths.Sort();
-            foreach(var filePath in filePaths) {
-                if (Path.GetExtension(filePath) == ".jpg" || Path.GetExtension(filePath) == ".png") {
-                    var image = new ImageViewModel(this) {
-                        FilePath = filePath,
-                        FileName = Path.GetFileName(filePath)
-                    };
-                    Images.Add(image);
-                    if (filePath == appSettings.SelectedFilePath) {
-
-                        SelectedImage = image;
-                    }
-                }
-            }
-            if (Images.Count > 0 && SelectedImage == null) {
-                SelectedImage = Images[0];
-            }
-        }
-    }
-
-    public ICommand SelectDirectoryCommand {
-        get {
-            _selectDirectoryCommand = _selectDirectoryCommand ?? ReactiveCommand.CreateFromTask(async () =>
-            {
-                if (Avalonia.Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                {
-                    var result = await new OpenFolderDialog()
-                    {
-                        Title = "Select folder",
-                        Directory = this.DirPath,
-                    }.ShowAsync(desktop.MainWindow);
-                    if (!string.IsNullOrEmpty(result)) {
-                        this.DirPath = result;
-                    }
-                }
-            });
-            return _selectDirectoryCommand;
-        }
-    }
+    private readonly AppSettings _appSettings;
+    private ImageViewModel? _selectedImage;
 
     #region Properties
 
+    public string DirPath
+    {
+        get
+        {
+            return _appSettings?.DirPath ?? "";
+        }
+        set {
+            _appSettings.DirPath = value;
+            SettingsService.SaveSettings(_appSettings);
+            this.RaisePropertyChanged(nameof(DirPath));
+        }
+    }
+
+    public ObservableCollection<ImageViewModel> Images { get;} = new ObservableCollection<ImageViewModel>();
+    
+    public string? SavedArtist
+    {
+        get
+        {
+            return _appSettings?.SavedArtist ?? "";
+        }
+        set {
+            _appSettings.SavedArtist = value;
+            SettingsService.SaveSettings(_appSettings);
+            this.RaisePropertyChanged(nameof(SavedArtist));
+        }
+    }
+    
+    public ICommand SelectDirectoryCommand {get; set;}
+
     public ImageViewModel? SelectedImage
     {
-
         get {
 
             return _selectedImage;
         }
         set {
             _selectedImage = value;
-            appSettings.SelectedFilePath = value?.FilePath;
-            SettingsService.SaveSettings(appSettings);
+            _appSettings.SelectedFilePath = value?.FilePath;
+            SettingsService.SaveSettings(_appSettings);
             this.RaisePropertyChanged(nameof(SelectedImage));
         }
     }
+    #endregion
 
-    public string DirPath
-    {
-        get
+    public MainWindowViewModel() {
+        _appSettings = SettingsService.LoadSettings();
+        LoadImagesAsync(_appSettings.DirPath, _appSettings.SelectedFilePath);
+        SelectDirectoryCommand = ReactiveCommand.CreateFromTask(async () => await SelectDirectoryAsync());
+    }
+
+    #region Methods
+
+    private async Task LoadImagesAsync(string? dirPath, string? selectedFilePath) {
+        await Task.Run(() => {    
+            Images.Clear();
+            if (dirPath is object && Directory.Exists(dirPath)) {
+                var filePaths = Directory.GetFiles(dirPath).ToList();
+                filePaths.Sort();
+                foreach(var filePath in filePaths) {
+                    if (Path.GetExtension(filePath) == ".jpg" || Path.GetExtension(filePath) == ".png") {
+                        var image = new ImageViewModel(this) {
+                            FilePath = filePath,
+                            FileName = Path.GetFileName(filePath)
+                        };
+                        Images.Add(image);
+                        if (filePath == selectedFilePath) {
+
+                            SelectedImage = image;
+                        }
+                    }
+                }
+                if (Images.Count > 0 && SelectedImage == null) {
+                    SelectedImage = Images[0];
+                }
+            }
+        });
+    }
+
+    private async Task SelectDirectoryAsync() { 
+        if (Avalonia.Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            return appSettings?.DirPath ?? "";
-        }
-        set {
-            appSettings.DirPath = value;
-            SettingsService.SaveSettings(appSettings);
-            this.RaisePropertyChanged(nameof(DirPath));
+            var result = await new OpenFolderDialog()
+            {
+                Title = "Select folder",
+                Directory = this.DirPath,
+            }.ShowAsync(desktop.MainWindow);
+            if (!string.IsNullOrEmpty(result)) {
+                this.DirPath = result;
+                await LoadImagesAsync(result, null);
+            }
         }
     }
 
-    public string? SavedArtist
-    {
-        get
-        {
-            return appSettings?.SavedArtist ?? "";
-        }
-        set {
-            appSettings.SavedArtist = value;
-            SettingsService.SaveSettings(appSettings);
-            this.RaisePropertyChanged(nameof(SavedArtist));
-        }
-    }
     #endregion    
 }
