@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using ExifEditor.Views;
@@ -26,12 +27,15 @@ public class ImageViewModel : ViewModelBase
     private Bitmap? _originalBitmap;
     public ICommand? _saveCommand;
     public ICommand? _showFullImageCommand;
-    public ICommand? _useSavedArtistCommand;
+    public ICommand? UseDefaultArtistCommand {get; set;}
+    public ICommand? EditDefaultArtistCommand {get; set;}
     public string? _title;
     public MainWindowViewModel? _mainWindow;
 
     public ImageViewModel(MainWindowViewModel window) {
         _mainWindow = window;
+        EditDefaultArtistCommand = ReactiveCommand.CreateFromTask(async () => await EditDefaultArtist());
+        UseDefaultArtistCommand = ReactiveCommand.Create(() => UseDefaultArtist());
     }
 
     private void SetValueOfTag(ImageFile file, ExifTag tag, string? value){
@@ -76,15 +80,29 @@ public class ImageViewModel : ViewModelBase
         }
     }
 
-    public ICommand UseSavedArtistCommand {
-        get {;
-            _useSavedArtistCommand = _useSavedArtistCommand ?? ReactiveCommand.CreateFromTask(async () =>
+    public void UseDefaultArtist() {
+        Artist = _mainWindow?.DefaultArtist;
+    }
+
+    public async Task EditDefaultArtist() {        
+        var window = new EditDefaultArtistWindow();
+        window.Width = 500;
+        window.Height = 150;
+        if (_mainWindow is object) {
+            var viewModel = new EditDefaultArtistViewModel(_mainWindow);
+            EditDefaultArtistViewModel.CurrentWindow = window;
+            window.DataContext = viewModel;
+            if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
-                Artist = _mainWindow?.SavedArtist;
-            });
-            return _useSavedArtistCommand;
+                if (desktop?.MainWindow is object) {
+                    await window.ShowDialog(desktop.MainWindow);
+                    var artist = viewModel.Artist;
+                    _mainWindow.DefaultArtist = artist;
+                }
+            }
         }
     }
+    
 
     public string? FilePath {
         get {
@@ -188,7 +206,7 @@ public class ImageViewModel : ViewModelBase
     public Bitmap? ImageBitmap { 
         get
         {   
-            return new Bitmap(FilePath);
+            return FilePath is object ? new Bitmap(FilePath) : null;
         }
     }
        

@@ -71,7 +71,8 @@
             </DockPanel>
             <Label Grid.Row="3" Grid.Column="0" FontWeight="Bold" Content="Artist:" VerticalAlignment="Center"/>
             <DockPanel Grid.Row="3" Grid.Column="1">
-                <Button Content="Use Saved Artist" Background="Orange" Padding="10 5" Margin="5 0 0 0" Command="{Binding UseSavedArtistCommand }" DockPanel.Dock="Right"/>
+                <Button Content="Edit Default Artist" Background="Orange" Padding="10 5" Margin="5 0 0 0" Command="{Binding EditDefaultArtistCommand}" DockPanel.Dock="Right"/>
+                <Button Content="Use Default Artist" Background="Orange" Padding="10 5" Margin="5 0 0 0" Command="{Binding UseDefaultArtistCommand }" DockPanel.Dock="Right"/>
                 <TextBox Text="{Binding Artist}" HorizontalAlignment="Stretch" />
             </DockPanel>
             <Label Grid.Row="4" Grid.Column="0" FontWeight="Bold" Content="Description:" Margin="0 5 0 0" VerticalAlignment="Top"/>

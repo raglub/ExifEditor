@@ -1,0 +1,27 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ExifEditor.Views.EditDefaultArtistWindow"
+        xmlns:vm="using:ExifEditor.ViewModels"
+        x:DataType="vm:EditDefaultArtistViewModel"
+        Title="Edit Default Artist">
+        <Grid Margin="10" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="50" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Label Grid.Row="0" Grid.Column="0" FontWeight="Bold" Content="Artist:" Padding="5 6" />
+            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Artist}" />
+            <Button Grid.Row="1" 
+                    Grid.Column="0"
+                    Grid.ColumnSpan="2" 
+                    Background="Orange" 
+                    Margin="0 5"
+                    Command="{Binding SaveFormCommand}"
+                    HorizontalAlignment="Center">Save</Button>
+        </Grid>
+</Window>
