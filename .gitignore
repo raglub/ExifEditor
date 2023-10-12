@@ -2,3 +2,4 @@ bin/
 obj/
 settings.json
 .vscode/
+Utilities/FileModifier.cs
