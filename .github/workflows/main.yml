@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - master
+    - develop
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-2019, ubuntu-20.04]
+    steps:
+    - uses: actions/checkout@v1
+    - name: npm ci, build and test (windows-only) 
+      env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      if: contains(matrix.os, 'window')
+      run: |
+        echo ${LATEST_TAG_DISTANCE}
+        dotnet build
+    - name: npm ci, build and test (linux-only) 
+      env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      if: contains(matrix.os, 'ubuntu')  
+      run: |
+        dotnet build
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ExifEditor-${{ matrix.os }}
+        path: |
+          bin/Debug/net6.0/*
+          if-no-files-found: ignore
