@@ -39,16 +39,16 @@ public class MainWindowViewModel : ViewModelBase
 
     public ObservableCollection<ImageViewModel> Images { get;} = new ObservableCollection<ImageViewModel>();
     
-    public string? SavedArtist
+    public string? DefaultArtist
     {
         get
         {
-            return _appSettings?.SavedArtist ?? "";
+            return _appSettings?.DefaultArtist ?? "";
         }
         set {
-            _appSettings.SavedArtist = value;
+            _appSettings.DefaultArtist = value;
             SettingsService.SaveSettings(_appSettings);
-            this.RaisePropertyChanged(nameof(SavedArtist));
+            this.RaisePropertyChanged(nameof(DefaultArtist));
         }
     }
     
@@ -71,7 +71,7 @@ public class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel() {
         _appSettings = SettingsService.LoadSettings();
-        LoadImagesAsync(_appSettings.DirPath, _appSettings.SelectedFilePath);
+        Task.Run(async () => await LoadImagesAsync(_appSettings.DirPath, _appSettings.SelectedFilePath));
         SelectDirectoryCommand = ReactiveCommand.CreateFromTask(async () => await SelectDirectoryAsync());
     }
 
@@ -104,7 +104,7 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     private async Task SelectDirectoryAsync() { 
-        if (Avalonia.Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var result = await new OpenFolderDialog()
             {
