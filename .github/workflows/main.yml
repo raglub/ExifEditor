@@ -38,5 +38,5 @@ jobs:
       with:
         name: ExifEditor-${{ matrix.os }}
         path: |
-          bin/Debug/net6.0/*
-          if-no-files-found: ignore
+          bin/Debug/net6.0/
+        if-no-files-found: ignore
