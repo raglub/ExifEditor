@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-    - master
+    - main
     - develop
 
 jobs:
@@ -15,18 +15,24 @@ jobs:
         os: [windows-2019, ubuntu-20.04]
     steps:
     - uses: actions/checkout@v1
+    - name: Setup .NET 6.x
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.x'
     - name: npm ci, build and test (windows-only) 
       env:
           GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
       if: contains(matrix.os, 'window')
       run: |
         echo ${LATEST_TAG_DISTANCE}
+        dotnet restore
         dotnet build
     - name: npm ci, build and test (linux-only) 
       env:
           GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
       if: contains(matrix.os, 'ubuntu')  
       run: |
+        dotnet restore
         dotnet build
     - uses: actions/upload-artifact@v2
       with:
