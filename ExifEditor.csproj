@@ -1,17 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    
+    <Version>0.1.0</Version>
+    <Description>The program is used for editing the Description and Artist in images saved in the Exif standard.</Description>
   </PropertyGroup>
-
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
+    <Content Include="icon.png" CopyToPublishDirectory="PreserveNewest">
+        <LinuxPath>/usr/share/ExifEditor/icon.png</LinuxPath>
+    </Content>
+    <Content Include="ExifEditor.desktop" CopyToPublishDirectory="PreserveNewest">
+        <LinuxPath>/usr/share/applications/ExifEditor.desktop</LinuxPath>
+    </Content>
   </ItemGroup>
 
 

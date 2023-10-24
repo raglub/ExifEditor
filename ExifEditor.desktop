@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=ExifEditor
+Name[en_US]=ExifEditor
+Icon=/usr/share/ExifEditor/icon.png
+Exec=/usr/share/ExifEditor/ExifEditor
+Categories=Office;
