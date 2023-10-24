@@ -28,10 +28,13 @@ jobs:
       if: contains(matrix.os, 'ubuntu')  
       run: |
         echo ${LATEST_TAG_DISTANCE}
-        dotnet build --configuration Release -p:Version=0.1.0
+        dotnet deb install
+
+        dotnet-deb -c Release
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: ExifEditor-${{ matrix.os }}
         path: |
-          bin/Release/net6.0/
+            bin/Release/net6.0/linux-x64/publish
+            dotnet-deb -c Release
