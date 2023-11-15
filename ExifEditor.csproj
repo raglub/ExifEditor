@@ -12,7 +12,7 @@
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
-    <Content Include="icon.png" CopyToPublishDirectory="PreserveNewest">
+    <Content Include="Resources/icon.png" CopyToPublishDirectory="PreserveNewest">
         <LinuxPath>/usr/share/ExifEditor/icon.png</LinuxPath>
     </Content>
     <Content Include="ExifEditor.desktop" CopyToPublishDirectory="PreserveNewest">
