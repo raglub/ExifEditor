@@ -103,17 +103,20 @@ public class MainWindowViewModel : ViewModelBase
         });
     }
 
-    private async Task SelectDirectoryAsync() { 
+    private async Task SelectDirectoryAsync() {
         if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var result = await new OpenFolderDialog()
-            {
-                Title = "Select folder",
-                Directory = this.DirPath,
-            }.ShowAsync(desktop.MainWindow);
-            if (!string.IsNullOrEmpty(result)) {
-                this.DirPath = result;
-                await LoadImagesAsync(result, null);
+            if (desktop.MainWindow is not null) {
+                var result = await desktop.MainWindow.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions{
+                    Title = "Select folder",
+                    AllowMultiple = false,
+                    SuggestedStartLocation = await desktop.MainWindow.StorageProvider.TryGetFolderFromPathAsync(this.DirPath)
+                });
+                if (result.Any()) {
+                    var path = result.FirstOrDefault()?.Path.AbsolutePath;
+                    this.DirPath = path;
+                    await LoadImagesAsync(path, null);
+                }
             }
         }
     }
