@@ -35,6 +35,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: ExifEditor-${{ matrix.os }}
-        path: |
-            bin/Release/net6.0/linux-x64/publish
-            dotnet-deb -c Release
+        path: /home/runner/work/ExifEditor/ExifEditor/bin/Release/net6.0/ExifEditor.0.1.0.deb
