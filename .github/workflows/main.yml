@@ -28,8 +28,8 @@ jobs:
       if: contains(matrix.os, 'ubuntu')  
       run: |
         echo ${LATEST_TAG_DISTANCE}
+        dotnet tool install -g dotnet-deb
         dotnet deb install
-
         dotnet-deb -c Release
     - name: Upload artifact
       uses: actions/upload-artifact@v3
