@@ -14,6 +14,9 @@ using Avalonia.Platform;
 using System.Text.RegularExpressions;
 using System.Linq;
 using System.Threading.Tasks;
+using MsBox.Avalonia;
+using MsBox.Avalonia.Enums;
+using System.Reflection;
 
 namespace ExifEditor.ViewModels;
 
@@ -51,8 +54,10 @@ public class MainWindowViewModel : ViewModelBase
             this.RaisePropertyChanged(nameof(DefaultArtist));
         }
     }
-    
+
+    public ICommand ExitApplicationCommand {get; set;}    
     public ICommand SelectDirectoryCommand {get; set;}
+    public ICommand ShowAboutCommand {get; set;}
 
     public ImageViewModel? SelectedImage
     {
@@ -73,6 +78,8 @@ public class MainWindowViewModel : ViewModelBase
         _appSettings = SettingsService.LoadSettings();
         Task.Run(async () => await LoadImagesAsync(_appSettings.DirPath, _appSettings.SelectedFilePath));
         SelectDirectoryCommand = ReactiveCommand.CreateFromTask(async () => await SelectDirectoryAsync());
+        ShowAboutCommand = ReactiveCommand.CreateFromTask(async () => await ShowAbout());
+        ExitApplicationCommand = ReactiveCommand.CreateFromTask(async () => await ExitApplication());
     }
 
     #region Methods
@@ -119,6 +126,24 @@ public class MainWindowViewModel : ViewModelBase
                 }
             }
         }
+    }
+
+    private async Task ShowAbout() {
+        var assembly = Assembly.GetExecutingAssembly();
+
+        var authorsAttribute = assembly.GetCustomAttribute<AssemblyCompanyAttribute>();
+        var author = authorsAttribute?.Company;
+        
+        var versionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+        var version = versionAttribute?.InformationalVersion;
+        
+        var box = MessageBoxManager
+            .GetMessageBoxStandard("ExifEditor", $"ExifEditor \nVersion: {version} \nAuthor: {author}", ButtonEnum.Ok);
+        var result = await box.ShowAsync();
+    }
+
+    private async Task ExitApplication() {
+        Environment.Exit(0);
     }
 
     #endregion    
