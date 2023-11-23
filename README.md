@@ -7,3 +7,9 @@ Author: Michał Szyma
 ```
 dotnet build
 ```
+
+## Release
+
+```
+dotent-deb -c Release
+```
