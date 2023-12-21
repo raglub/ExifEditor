@@ -19,6 +19,9 @@
                 <Separator/>
                 <MenuItem Header="_Exit" Command="{Binding ExitApplicationCommand}"/>
             </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="Generate PDF Report" Command="{Binding GeneratePDFReportCommand}"/>
+            </MenuItem>
             <MenuItem Header="_Help">
                 <MenuItem Header="About" Command="{Binding ShowAboutCommand}"/>
             </MenuItem>
