@@ -15,11 +15,12 @@ public partial class App : Application
 
     public App()
     {
-
         AppHost = Host.CreateDefaultBuilder()
             .ConfigureServices((hostContext, services) => 
             {
                 services.AddSingleton<MainWindow>();
+                services.AddTransient<PdfGeneratorService>();
+                services.AddTransient<MainWindowViewModel>();
             }).Build();
     }
     public override void Initialize()
@@ -29,12 +30,9 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        // AppHost!.Start();
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var mainWindow = AppHost!.Services.GetRequiredService<MainWindow>();
-            mainWindow.DataContext = new MainWindowViewModel();
-            desktop.MainWindow = mainWindow;
+            desktop.MainWindow = AppHost!.Services.GetRequiredService<MainWindow>();
         }
         base.OnFrameworkInitializationCompleted();
     }
