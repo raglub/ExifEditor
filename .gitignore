@@ -3,3 +3,4 @@ obj/
 settings.json
 .vscode/
 Utilities/FileModifier.cs
+report.pdf

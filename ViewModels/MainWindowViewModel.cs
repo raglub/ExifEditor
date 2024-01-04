@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using System.Reflection;
+using ExifEditor.Services;
 
 namespace ExifEditor.ViewModels;
 
@@ -24,6 +25,8 @@ namespace ExifEditor.ViewModels;
 public class MainWindowViewModel : ViewModelBase
 {
     private readonly AppSettings _appSettings;
+
+    private readonly DirectoryService _directory;
     private readonly PdfGeneratorService _pdfGenerator;
     private ImageViewModel? _selectedImage;
 
@@ -77,8 +80,9 @@ public class MainWindowViewModel : ViewModelBase
     }
     #endregion
 
-    public MainWindowViewModel(PdfGeneratorService pdfGenerator) {
+    public MainWindowViewModel(PdfGeneratorService pdfGenerator, DirectoryService directory) {
         _pdfGenerator = pdfGenerator;
+        _directory = directory;
         _appSettings = SettingsService.LoadSettings();
         Task.Run(async () => await LoadImagesAsync(_appSettings.DirPath, _appSettings.SelectedFilePath));
         SelectDirectoryCommand = ReactiveCommand.CreateFromTask(async () => await SelectDirectoryAsync());
@@ -91,27 +95,24 @@ public class MainWindowViewModel : ViewModelBase
 
     private async Task GeneratePDFReportAsync() {
 
-        await _pdfGenerator.GenerateReportAsync();
+        await _pdfGenerator.GenerateReportAsync(_appSettings.DirPath);
     }
 
     private async Task LoadImagesAsync(string? dirPath, string? selectedFilePath) {
         await Task.Run(() => {    
             Images.Clear();
             if (dirPath is object && Directory.Exists(dirPath)) {
-                var filePaths = Directory.GetFiles(dirPath).ToList();
-                filePaths.Sort();
-                foreach(var filePath in filePaths) {
-                    if (Path.GetExtension(filePath) == ".jpg" || Path.GetExtension(filePath) == ".png") {
-                        var image = new ImageViewModel(this) {
-                            FilePath = filePath,
-                            FileName = Path.GetFileName(filePath)
-                        };
-                        Images.Add(image);
-                        if (filePath == selectedFilePath) {
-
-                            SelectedImage = image;
-                        }
+                var imagePaths = _directory.GetImagePaths(dirPath);
+                foreach(var imagePath in imagePaths) {
+                    var image = new ImageViewModel(this) {
+                        FilePath = imagePath,
+                        FileName = Path.GetFileName(imagePath)
+                    };
+                    Images.Add(image);
+                    if (imagePath == selectedFilePath) {
+                        SelectedImage = image;
                     }
+                
                 }
                 if (Images.Count > 0 && SelectedImage == null) {
                     SelectedImage = Images[0];
