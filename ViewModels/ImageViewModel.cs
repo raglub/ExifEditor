@@ -11,6 +11,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using ExifEditor.Services;
 using ExifEditor.Views;
 using ExifLibrary;
 using ReactiveUI;
@@ -30,10 +31,12 @@ public class ImageViewModel : ViewModelBase
     public ICommand? UseDefaultArtistCommand {get; set;}
     public ICommand? EditDefaultArtistCommand {get; set;}
     public string? _title;
-    public MainWindowViewModel? _mainWindow;
+    public readonly MainWindowViewModel? _mainWindow;
+    public readonly ServiceFactory _serviceFactory;
 
-    public ImageViewModel(MainWindowViewModel window) {
+    public ImageViewModel(MainWindowViewModel window, ServiceFactory serviceFactory) {
         _mainWindow = window;
+        _serviceFactory = serviceFactory;
         EditDefaultArtistCommand = ReactiveCommand.CreateFromTask(async () => await EditDefaultArtist());
         UseDefaultArtistCommand = ReactiveCommand.Create(() => UseDefaultArtist());
     }
@@ -111,15 +114,16 @@ public class ImageViewModel : ViewModelBase
         set {
             _filePath = value;
             if (!string.IsNullOrEmpty(_filePath)) {
+                var imageService = _serviceFactory.CreateImageService(_filePath);
                 var file = ImageFile.FromFile(FilePath);
                 
-                if (file.Properties.Contains(ExifTag.ImageDescription)) {
-                    Description = (string)file.Properties.Get(ExifTag.ImageDescription).Value;
+                if (imageService.IsDescription()) {
+                    Description = imageService.GetDescription();
                     this.RaisePropertyChanged(nameof(Description));
                 }
             
-                if (file.Properties.Contains(ExifTag.Artist)) {
-                    Artist = (string)file.Properties.Get(ExifTag.Artist).Value;
+                if (imageService.IsArtist()) {
+                    Artist = imageService.GetArtist();
                     this.RaisePropertyChanged(nameof(Artist));
                 }
 
@@ -203,7 +207,7 @@ public class ImageViewModel : ViewModelBase
         }
     }
 
-    public Bitmap? ImageBitmap { 
+    public Bitmap? ImageBitmap {
         get
         {   
             return FilePath is object ? new Bitmap(FilePath) : null;
