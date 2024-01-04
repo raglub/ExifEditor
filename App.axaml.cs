@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using ExifEditor.Services;
 using ExifEditor.ViewModels;
 using ExifEditor.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -19,6 +20,7 @@ public partial class App : Application
             .ConfigureServices((hostContext, services) => 
             {
                 services.AddSingleton<MainWindow>();
+                services.AddTransient<DirectoryService>();
                 services.AddTransient<PdfGeneratorService>();
                 services.AddTransient<MainWindowViewModel>();
             }).Build();
