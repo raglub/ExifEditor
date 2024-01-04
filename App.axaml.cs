@@ -21,6 +21,8 @@ public partial class App : Application
             {
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<DirectoryService>();
+                services.AddSingleton<ServiceFactory>();
+                services.AddTransient<ImageService>();
                 services.AddTransient<PdfGeneratorService>();
                 services.AddTransient<MainWindowViewModel>();
             }).Build();

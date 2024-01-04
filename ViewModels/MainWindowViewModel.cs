@@ -18,6 +18,7 @@ using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using System.Reflection;
 using ExifEditor.Services;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace ExifEditor.ViewModels;
 
@@ -25,6 +26,8 @@ namespace ExifEditor.ViewModels;
 public class MainWindowViewModel : ViewModelBase
 {
     private readonly AppSettings _appSettings;
+
+    private readonly ServiceFactory _serviceFactory;
 
     private readonly DirectoryService _directory;
     private readonly PdfGeneratorService _pdfGenerator;
@@ -61,7 +64,7 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     public ICommand ExitApplicationCommand {get; set;}
-    public ICommand GeneratePDFReportCommand {get; set;}    
+    public ICommand GeneratePDFReportCommand {get; set;}
     public ICommand SelectDirectoryCommand {get; set;}
     public ICommand ShowAboutCommand {get; set;}
 
@@ -80,9 +83,10 @@ public class MainWindowViewModel : ViewModelBase
     }
     #endregion
 
-    public MainWindowViewModel(PdfGeneratorService pdfGenerator, DirectoryService directory) {
+    public MainWindowViewModel(PdfGeneratorService pdfGenerator, DirectoryService directory, ServiceFactory serviceFactory) {
         _pdfGenerator = pdfGenerator;
         _directory = directory;
+        _serviceFactory = serviceFactory;
         _appSettings = SettingsService.LoadSettings();
         Task.Run(async () => await LoadImagesAsync(_appSettings.DirPath, _appSettings.SelectedFilePath));
         SelectDirectoryCommand = ReactiveCommand.CreateFromTask(async () => await SelectDirectoryAsync());
@@ -104,10 +108,7 @@ public class MainWindowViewModel : ViewModelBase
             if (dirPath is object && Directory.Exists(dirPath)) {
                 var imagePaths = _directory.GetImagePaths(dirPath);
                 foreach(var imagePath in imagePaths) {
-                    var image = new ImageViewModel(this) {
-                        FilePath = imagePath,
-                        FileName = Path.GetFileName(imagePath)
-                    };
+                    var image = _serviceFactory.CreateImageViewModel(this, imagePath);
                     Images.Add(image);
                     if (imagePath == selectedFilePath) {
                         SelectedImage = image;
