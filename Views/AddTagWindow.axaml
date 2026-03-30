@@ -1,0 +1,21 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ExifEditor.Views.AddTagWindow"
+        Title="Tag"
+        SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+    <Grid Margin="15" MinWidth="300">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="Enter label (e.g. first name and last name):" Margin="0 0 0 5"/>
+        <TextBox Grid.Row="1" Name="LabelTextBox" Margin="0 0 0 10"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+            <Button Content="OK" Background="Orange" Name="OkButton" Width="80"/>
+            <Button Content="Cancel" Name="CancelButton" Width="80"/>
+        </StackPanel>
+    </Grid>
+</Window>

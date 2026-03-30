@@ -18,7 +18,7 @@ using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using System.Reflection;
 using ExifEditor.Services;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Avalonia.Threading;
 
 namespace ExifEditor.ViewModels;
 
@@ -103,21 +103,24 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     private async Task LoadImagesAsync(string? dirPath, string? selectedFilePath) {
-        await Task.Run(() => {    
+        var imagePaths = await Task.Run(() => {
+            if (dirPath is not null && Directory.Exists(dirPath)) {
+                return _directory.GetImagePaths(dirPath);
+            }
+            return new List<string>();
+        });
+
+        await Dispatcher.UIThread.InvokeAsync(() => {
             Images.Clear();
-            if (dirPath is object && Directory.Exists(dirPath)) {
-                var imagePaths = _directory.GetImagePaths(dirPath);
-                foreach(var imagePath in imagePaths) {
-                    var image = _serviceFactory.CreateImageViewModel(this, imagePath);
-                    Images.Add(image);
-                    if (imagePath == selectedFilePath) {
-                        SelectedImage = image;
-                    }
-                
+            foreach (var imagePath in imagePaths) {
+                var image = _serviceFactory.CreateImageViewModel(this, imagePath);
+                Images.Add(image);
+                if (imagePath == selectedFilePath) {
+                    SelectedImage = image;
                 }
-                if (Images.Count > 0 && SelectedImage == null) {
-                    SelectedImage = Images[0];
-                }
+            }
+            if (Images.Count > 0 && SelectedImage == null) {
+                SelectedImage = Images[0];
             }
         });
     }

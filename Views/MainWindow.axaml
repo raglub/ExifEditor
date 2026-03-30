@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:ExifEditor.ViewModels"
+        xmlns:models="using:ExifEditor.Models"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:DataType="vm:MainWindowViewModel"
         x:Class="ExifEditor.Views.MainWindow"
@@ -67,7 +68,7 @@
                     <RowDefinition Height="30"/>
                     <RowDefinition Height="300"/>
                     <RowDefinition Height="30"/>
-                    <RowDefinition Height="30"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="40"/>
                 </Grid.RowDefinitions>
@@ -79,14 +80,42 @@
                 <Label Grid.Row="0" Grid.Column="1" Content="{Binding FileName}"/>
                 <Button Grid.Row="0" Grid.Column="1" Content="Show" HorizontalAlignment="Right" Command="{Binding ShowFullImageCommand}"/>
                 <DockPanel Grid.Row="1" Grid.Column="1" Height="300">
-                    <Image Margin="5" Source="{Binding LargerThumbnail}" HorizontalAlignment="Center" />
-                    <ListBox Grid.Row="6" Grid.Column="1" HorizontalAlignment="Right" Margin="0 5 0 0" ItemsSource="{Binding ImageProperties}"/>
+                    <ListBox DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="5 0 0 0" ItemsSource="{Binding ImageProperties}" MaxWidth="200"/>
+                    <Panel Name="ImageTagPanel" Margin="5" Cursor="Cross" Background="Transparent" PointerPressed="OnImagePointerPressed" ClipToBounds="True">
+                        <Image Name="PreviewImage" Source="{Binding LargerThumbnail}" Stretch="Uniform"/>
+                        <Canvas Name="TagCanvas"/>
+                    </Panel>
                 </DockPanel>
-                <Label Grid.Row="3" Grid.Column="0" FontWeight="Bold" Content="Artist:" VerticalAlignment="Center"/>
-                <DockPanel Grid.Row="3" Grid.Column="1">
+                <Label Grid.Row="2" Grid.Column="0" FontWeight="Bold" Content="Artist:" VerticalAlignment="Center"/>
+                <DockPanel Grid.Row="2" Grid.Column="1">
                     <Button Content="Edit Default Artist" Background="Orange" Padding="10 5" Margin="5 0 0 0" Command="{Binding EditDefaultArtistCommand}" DockPanel.Dock="Right"/>
                     <Button Content="Use Default Artist" Background="Orange" Padding="10 5" Margin="5 0 0 0" Command="{Binding UseDefaultArtistCommand }" DockPanel.Dock="Right"/>
                     <TextBox Text="{Binding Artist}" HorizontalAlignment="Stretch" />
+                </DockPanel>
+                <Label Grid.Row="3" Grid.Column="0" FontWeight="Bold" Content="Tags:" VerticalAlignment="Top" Margin="0 5 0 0"/>
+                <DockPanel Grid.Row="3" Grid.Column="1" Margin="0 5 0 0">
+                    <DockPanel DockPanel.Dock="Bottom" Margin="0 3 0 0">
+                        <CheckBox Name="ShowAllTagsCheckBox" Content="Show all tags" FontSize="11" IsChecked="True"
+                                  DockPanel.Dock="Right" VerticalAlignment="Center" Margin="10 0 0 0"/>
+                        <TextBlock Text="Click on the image to add a tag" FontSize="10" Foreground="Gray" VerticalAlignment="Center"/>
+                    </DockPanel>
+                    <ListBox x:Name="TagsList" ItemsSource="{Binding Tags}" MaxHeight="120">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:ImageTag">
+                                <DockPanel>
+                                    <Button Content="✕" DockPanel.Dock="Right" Padding="5 2" Margin="5 0 0 0"
+                                            Command="{ReflectionBinding #TagsList.DataContext.RemoveTagCommand}"
+                                            CommandParameter="{Binding}"/>
+                                    <Button Content="✎" DockPanel.Dock="Right" Padding="5 2" Margin="5 0 0 0"
+                                            Command="{ReflectionBinding #TagsList.DataContext.EditTagCommand}"
+                                            CommandParameter="{Binding}"/>
+                                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding PositionDisplay}" Foreground="Gray" FontSize="10"
+                                               Margin="10 0 0 0" VerticalAlignment="Center"/>
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </DockPanel>
                 <Label Grid.Row="4" Grid.Column="0" FontWeight="Bold" Content="Description:" Margin="0 5 0 0" VerticalAlignment="Top"/>
                 <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Description}" TextWrapping="Wrap" Margin="0 5 0 0" AcceptsReturn="True"/>            

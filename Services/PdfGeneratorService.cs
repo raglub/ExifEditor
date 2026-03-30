@@ -1,3 +1,4 @@
+using ExifEditor.Models;
 using ExifEditor.Services;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -75,10 +76,17 @@ public class PdfGeneratorService {
                                     text.Span($"Artist: ").Bold();
                                     text.Span($"{imageService.GetArtist()}");
                                 });
+                                var descriptionData = DescriptionData.Deserialize(imageService.GetDescription());
                                 x.Item().Text(text => {
                                     text.Span($"Description: ").Bold();
-                                    text.Span($"{imageService.GetDescription()}");
+                                    text.Span($"{descriptionData.Description}");
                                 });
+                                if (descriptionData.Tags is { Count: > 0 }) {
+                                    x.Item().Text("Tags:").Bold();
+                                    foreach (var tag in descriptionData.Tags) {
+                                        x.Item().Text($"  - {tag.Label} ({tag.X * 100:F0}%, {tag.Y * 100:F0}%)");
+                                    }
+                                }
                             });
 
                         page.Footer()
