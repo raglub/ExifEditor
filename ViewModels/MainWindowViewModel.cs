@@ -13,12 +13,12 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using System.Text.RegularExpressions;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
 using System.Reflection;
 using ExifEditor.Services;
-using Avalonia.Threading;
 
 namespace ExifEditor.ViewModels;
 
@@ -32,6 +32,10 @@ public class MainWindowViewModel : ViewModelBase
     private readonly DirectoryService _directory;
     private readonly PdfGeneratorService _pdfGenerator;
     private ImageViewModel? _selectedImage;
+    private bool _isLoading;
+    private int _loadingProgress;
+    private int _loadingTotal;
+    private CancellationTokenSource? _loadingCts;
 
     #region Properties
 
@@ -68,14 +72,29 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand SelectDirectoryCommand {get; set;}
     public ICommand ShowAboutCommand {get; set;}
 
+    public bool IsLoading {
+        get => _isLoading;
+        set => this.RaiseAndSetIfChanged(ref _isLoading, value);
+    }
+
+    public int LoadingProgress {
+        get => _loadingProgress;
+        set => this.RaiseAndSetIfChanged(ref _loadingProgress, value);
+    }
+
+    public int LoadingTotal {
+        get => _loadingTotal;
+        set => this.RaiseAndSetIfChanged(ref _loadingTotal, value);
+    }
+
     public ImageViewModel? SelectedImage
     {
         get {
-
             return _selectedImage;
         }
         set {
             _selectedImage = value;
+            _selectedImage?.EnsureMetadataLoaded();
             _appSettings.SelectedFilePath = value?.FilePath;
             SettingsService.SaveSettings(_appSettings);
             this.RaisePropertyChanged(nameof(SelectedImage));
@@ -88,7 +107,7 @@ public class MainWindowViewModel : ViewModelBase
         _directory = directory;
         _serviceFactory = serviceFactory;
         _appSettings = SettingsService.LoadSettings();
-        Task.Run(async () => await LoadImagesAsync(_appSettings.DirPath, _appSettings.SelectedFilePath));
+        _ = LoadImagesAsync(_appSettings.DirPath, _appSettings.SelectedFilePath);
         SelectDirectoryCommand = ReactiveCommand.CreateFromTask(async () => await SelectDirectoryAsync());
         ShowAboutCommand = ReactiveCommand.CreateFromTask(async () => await ShowAbout());
         ExitApplicationCommand = ReactiveCommand.CreateFromTask(async () => await ExitApplication());
@@ -103,26 +122,57 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     private async Task LoadImagesAsync(string? dirPath, string? selectedFilePath) {
-        var imagePaths = await Task.Run(() => {
-            if (dirPath is not null && Directory.Exists(dirPath)) {
-                return _directory.GetImagePaths(dirPath);
-            }
-            return new List<string>();
-        });
+        _loadingCts?.Cancel();
+        _loadingCts = new CancellationTokenSource();
+        var token = _loadingCts.Token;
 
-        await Dispatcher.UIThread.InvokeAsync(() => {
-            Images.Clear();
-            foreach (var imagePath in imagePaths) {
-                var image = _serviceFactory.CreateImageViewModel(this, imagePath);
+        IsLoading = true;
+        LoadingProgress = 0;
+
+        List<string> imagePaths;
+        if (dirPath is not null && Directory.Exists(dirPath)) {
+            imagePaths = _directory.GetImagePaths(dirPath);
+        } else {
+            imagePaths = new List<string>();
+        }
+
+        if (token.IsCancellationRequested) return;
+
+        LoadingTotal = imagePaths.Count;
+        Images.Clear();
+        SelectedImage = null;
+
+        if (imagePaths.Count == 0) {
+            IsLoading = false;
+            return;
+        }
+
+        const int batchSize = 10;
+
+        for (int i = 0; i < imagePaths.Count; i += batchSize) {
+            if (token.IsCancellationRequested) return;
+
+            var end = Math.Min(i + batchSize, imagePaths.Count);
+            for (int j = i; j < end; j++) {
+                var image = _serviceFactory.CreateImageViewModel(this, imagePaths[j]);
                 Images.Add(image);
-                if (imagePath == selectedFilePath) {
+                if (imagePaths[j] == selectedFilePath && SelectedImage == null) {
                     SelectedImage = image;
                 }
             }
-            if (Images.Count > 0 && SelectedImage == null) {
-                SelectedImage = Images[0];
+            LoadingProgress = end;
+
+            if (end < imagePaths.Count) {
+                await Task.Delay(10);
             }
-        });
+        }
+
+        if (token.IsCancellationRequested) return;
+
+        if (Images.Count > 0 && SelectedImage == null) {
+            SelectedImage = Images[0];
+        }
+        IsLoading = false;
     }
 
     private async Task SelectDirectoryAsync() {

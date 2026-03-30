@@ -30,6 +30,7 @@
         <Grid DockPanel.Dock="Bottom" Margin="10" Background="#1E1E1E">
             <Grid.RowDefinitions>
                 <RowDefinition Height="50"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
@@ -39,7 +40,12 @@
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" VerticalAlignment="Center" Text="{Binding DirPath}"/>
             <Button Grid.Row="0" Grid.Column="3" Content="Select Directory" Background="Orange" Command="{Binding SelectDirectoryCommand }" VerticalAlignment="Center" HorizontalAlignment="Right"/>
-            <ListBox ItemsSource="{Binding Images}" SelectedItem="{Binding SelectedImage}" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2">   
+            <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
+                         IsVisible="{Binding IsLoading}"
+                         Minimum="0" Maximum="{Binding LoadingTotal}"
+                         Value="{Binding LoadingProgress}"
+                         Height="3"/>
+            <ListBox ItemsSource="{Binding Images}" SelectedItem="{Binding SelectedImage}" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">   
                 <ListBox.Styles>
                     <Style Selector="ListBoxItem">
                         <Setter Property="BorderThickness" Value="0 1 0 0" />
@@ -59,7 +65,7 @@
             <Border
             BorderBrush="DarkGray"
             BorderThickness="0 0 0 0"
-            Grid.Row="1"
+            Grid.Row="2"
             Grid.Column="2" 
             Margin="5"
             Padding="15">

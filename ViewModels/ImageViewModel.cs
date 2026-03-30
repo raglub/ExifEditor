@@ -10,6 +10,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using ExifEditor.Models;
 using ExifEditor.Services;
 using ExifEditor.Views;
@@ -26,6 +27,8 @@ public class ImageViewModel : ViewModelBase
     private bool _isModified = false;
     private Bitmap? _largerThumbnail;
     private Bitmap? _originalBitmap;
+    private bool _metadataLoaded = false;
+    private bool _thumbnailLoading = false;
     public ICommand? _saveCommand;
     public ICommand? _showFullImageCommand;
     public ICommand? UseDefaultArtistCommand {get; set;}
@@ -149,36 +152,40 @@ public class ImageViewModel : ViewModelBase
     public string? FilePath {
         get {
             return _filePath;
-        } 
+        }
         set {
             _filePath = value;
-            if (!string.IsNullOrEmpty(_filePath)) {
-                var imageService = _serviceFactory.CreateImageService(_filePath);
-                var file = ImageFile.FromFile(FilePath);
+        }
+    }
 
-                var rawDescription = imageService.IsDescription() ? imageService.GetDescription() : null;
-                var descriptionData = DescriptionData.Deserialize(rawDescription);
-                _description = descriptionData.Description;
-                this.RaisePropertyChanged(nameof(Description));
-                if (descriptionData.Tags is { Count: > 0 }) {
-                    foreach (var tag in descriptionData.Tags) {
-                        Tags.Add(tag);
-                    }
-                }
+    public void EnsureMetadataLoaded() {
+        if (_metadataLoaded || string.IsNullOrEmpty(_filePath)) return;
+        _metadataLoaded = true;
 
-                if (imageService.IsArtist()) {
-                    _artist = imageService.GetArtist();
-                    this.RaisePropertyChanged(nameof(Artist));
-                }
+        var imageService = _serviceFactory.CreateImageService(_filePath);
+        var file = ImageFile.FromFile(_filePath);
 
-                IsModified = false;
-                foreach(var property in file.Properties) {
-                    if (property.Name == nameof(ExifTag.Artist) || property.Name == nameof(ExifTag.ImageDescription)) {
-                        continue;
-                    }
-                    ImageProperties.Add($"{property.Name}: {property.Value}");
-                }
+        var rawDescription = imageService.IsDescription() ? imageService.GetDescription() : null;
+        var descriptionData = DescriptionData.Deserialize(rawDescription);
+        _description = descriptionData.Description;
+        this.RaisePropertyChanged(nameof(Description));
+        if (descriptionData.Tags is { Count: > 0 }) {
+            foreach (var tag in descriptionData.Tags) {
+                Tags.Add(tag);
             }
+        }
+
+        if (imageService.IsArtist()) {
+            _artist = imageService.GetArtist();
+            this.RaisePropertyChanged(nameof(Artist));
+        }
+
+        IsModified = false;
+        foreach (var property in file.Properties) {
+            if (property.Name == nameof(ExifTag.Artist) || property.Name == nameof(ExifTag.ImageDescription)) {
+                continue;
+            }
+            ImageProperties.Add($"{property.Name}: {property.Value}");
         }
     }
 
@@ -221,9 +228,20 @@ public class ImageViewModel : ViewModelBase
     public Bitmap? Thumbnail {
         get
         {
-            if (_bitmap == null && FilePath is object) {
-                using var file = File.OpenRead(FilePath);
-                _bitmap = Bitmap.DecodeToWidth(file, 100);
+            if (_bitmap == null && FilePath is not null && !_thumbnailLoading) {
+                _thumbnailLoading = true;
+                Task.Run(() => {
+                    try {
+                        using var file = File.OpenRead(FilePath);
+                        var bitmap = Bitmap.DecodeToWidth(file, 100);
+                        Dispatcher.UIThread.InvokeAsync(() => {
+                            _bitmap = bitmap;
+                            this.RaisePropertyChanged(nameof(Thumbnail));
+                        });
+                    } catch {
+                        _thumbnailLoading = false;
+                    }
+                });
             }
             return _bitmap;
         }

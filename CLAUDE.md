@@ -27,3 +27,5 @@ Never commit automatically. All commits must be done manually by the user.
 
 ### Key Patterns
 
+- Prefer async/await over spawning new threads (Task.Run). Use Task.Run only for genuinely CPU-bound work (e.g., bitmap decoding), not for I/O or lightweight operations.
+
