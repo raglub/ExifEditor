@@ -3,10 +3,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         x:Class="ExifEditor.Views.LoadingView"
-        xmlns:fa="http://schemas.fontawesome.io/icons/"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450">
-        <Grid Margin="20" Background="Pink">
-            <Label Content="Loading... Please Wait" />            
-        </Grid>
+    <Border Margin="20" Background="{DynamicResource SurfaceBrush}"
+            CornerRadius="{DynamicResource LargeRadius}" Padding="20">
+        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="12">
+            <ProgressBar IsIndeterminate="True" Classes="themed" Width="200"/>
+            <TextBlock Text="Loading... Please Wait"
+                       Foreground="{DynamicResource TextSecondaryBrush}"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Border>
 </UserControl>
-             

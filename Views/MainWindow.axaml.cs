@@ -156,12 +156,16 @@ public partial class MainWindow : Window
             var x = offsetX + tag.X * renderedWidth;
             var y = offsetY + tag.Y * renderedHeight;
 
+            var tagMarkerBrush = this.FindResource("TagMarkerBrush") as IBrush ?? new SolidColorBrush(Colors.Orange);
+            var tagMarkerStrokeBrush = this.FindResource("TagMarkerStrokeBrush") as IBrush ?? new SolidColorBrush(Colors.White);
+            var tagLabelBgBrush = this.FindResource("TagLabelBgBrush") as IBrush ?? new SolidColorBrush(Color.FromArgb(200, 0, 0, 0));
+
             var dot = new Ellipse
             {
                 Width = 8,
                 Height = 8,
-                Fill = new SolidColorBrush(Colors.Orange),
-                Stroke = new SolidColorBrush(Colors.White),
+                Fill = tagMarkerBrush,
+                Stroke = tagMarkerStrokeBrush,
                 StrokeThickness = 1,
                 IsHitTestVisible = false
             };
@@ -171,8 +175,8 @@ public partial class MainWindow : Window
 
             var label = new Border
             {
-                Background = new SolidColorBrush(Color.FromArgb(200, 0, 0, 0)),
-                CornerRadius = new CornerRadius(3),
+                Background = tagLabelBgBrush,
+                CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(4, 2),
                 Child = new TextBlock
                 {

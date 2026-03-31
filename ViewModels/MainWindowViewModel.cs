@@ -28,6 +28,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly AppSettings _appSettings;
 
     private readonly ServiceFactory _serviceFactory;
+    private readonly ThemeService _themeService;
 
     private readonly DirectoryService _directory;
     private readonly PdfGeneratorService _pdfGenerator;
@@ -71,6 +72,8 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand GeneratePDFReportCommand {get; set;}
     public ICommand SelectDirectoryCommand {get; set;}
     public ICommand ShowAboutCommand {get; set;}
+    public ICommand SwitchToOceanBlueCommand {get; set;}
+    public ICommand SwitchToVioletCyanCommand {get; set;}
 
     public bool IsLoading {
         get => _isLoading;
@@ -102,16 +105,19 @@ public class MainWindowViewModel : ViewModelBase
     }
     #endregion
 
-    public MainWindowViewModel(PdfGeneratorService pdfGenerator, DirectoryService directory, ServiceFactory serviceFactory) {
+    public MainWindowViewModel(PdfGeneratorService pdfGenerator, DirectoryService directory, ServiceFactory serviceFactory, ThemeService themeService) {
         _pdfGenerator = pdfGenerator;
         _directory = directory;
         _serviceFactory = serviceFactory;
+        _themeService = themeService;
         _appSettings = SettingsService.LoadSettings();
         _ = LoadImagesAsync(_appSettings.DirPath, _appSettings.SelectedFilePath);
         SelectDirectoryCommand = ReactiveCommand.CreateFromTask(async () => await SelectDirectoryAsync());
         ShowAboutCommand = ReactiveCommand.CreateFromTask(async () => await ShowAbout());
         ExitApplicationCommand = ReactiveCommand.CreateFromTask(async () => await ExitApplication());
         GeneratePDFReportCommand = ReactiveCommand.CreateFromTask(async () => await GeneratePDFReportAsync());
+        SwitchToOceanBlueCommand = ReactiveCommand.Create(() => SwitchTheme(AppTheme.OceanBlue));
+        SwitchToVioletCyanCommand = ReactiveCommand.Create(() => SwitchTheme(AppTheme.VioletCyan));
     }
 
     #region Methods
@@ -211,5 +217,11 @@ public class MainWindowViewModel : ViewModelBase
         Environment.Exit(0);
     }
 
-    #endregion    
+    private void SwitchTheme(AppTheme theme) {
+        _themeService.ApplyTheme(theme);
+        _appSettings.Theme = theme.ToString();
+        SettingsService.SaveSettings(_appSettings);
+    }
+
+    #endregion
 }

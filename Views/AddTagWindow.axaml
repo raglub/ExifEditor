@@ -4,18 +4,21 @@
         Title="Tag"
         SizeToContent="WidthAndHeight"
         WindowStartupLocation="CenterOwner"
-        CanResize="False">
-    <Grid Margin="15" MinWidth="300">
+        CanResize="False"
+        Background="{DynamicResource BgPrimaryBrush}">
+    <Grid Margin="20" MinWidth="320">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Enter label (e.g. first name and last name):" Margin="0 0 0 5"/>
-        <TextBox Grid.Row="1" Name="LabelTextBox" Margin="0 0 0 10"/>
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
-            <Button Content="OK" Background="Orange" Name="OkButton" Width="80"/>
-            <Button Content="Cancel" Name="CancelButton" Width="80"/>
+        <TextBlock Grid.Row="0" Text="Enter label (e.g. first name and last name):"
+                   Margin="0 0 0 8"
+                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+        <TextBox Grid.Row="1" Name="LabelTextBox" Classes="themed" Margin="0 0 0 14"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Classes="accent" Content="OK" Name="OkButton" Width="80"/>
+            <Button Classes="subtle" Content="Cancel" Name="CancelButton" Width="80"/>
         </StackPanel>
     </Grid>
 </Window>

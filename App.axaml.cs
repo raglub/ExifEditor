@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -17,19 +16,30 @@ public partial class App : Application
     public App()
     {
         AppHost = Host.CreateDefaultBuilder()
-            .ConfigureServices((hostContext, services) => 
+            .ConfigureServices((hostContext, services) =>
             {
                 services.AddSingleton<MainWindow>();
                 services.AddTransient<DirectoryService>();
                 services.AddSingleton<ServiceFactory>();
                 services.AddTransient<ImageService>();
                 services.AddTransient<PdfGeneratorService>();
+                services.AddSingleton<ThemeService>();
                 services.AddTransient<MainWindowViewModel>();
             }).Build();
     }
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+
+        var themeService = AppHost!.Services.GetRequiredService<ThemeService>();
+
+        var settings = SettingsService.LoadSettings();
+        var savedTheme = settings.Theme switch
+        {
+            "VioletCyan" => AppTheme.VioletCyan,
+            _ => AppTheme.OceanBlue
+        };
+        themeService.ApplyTheme(savedTheme);
     }
 
     public override void OnFrameworkInitializationCompleted()
