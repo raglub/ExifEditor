@@ -77,6 +77,12 @@ public class PdfGeneratorService {
                                     text.Span($"{imageService.GetArtist()}");
                                 });
                                 var descriptionData = DescriptionData.Deserialize(imageService.GetDescription());
+                                if (!string.IsNullOrWhiteSpace(descriptionData.Scanned)) {
+                                    x.Item().Text(text => {
+                                        text.Span($"Scanned: ").Bold();
+                                        text.Span($"{descriptionData.Scanned}");
+                                    });
+                                }
                                 x.Item().Text(text => {
                                     text.Span($"Description: ").Bold();
                                     text.Span($"{descriptionData.Description}");

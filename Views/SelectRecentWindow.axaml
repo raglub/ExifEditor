@@ -1,0 +1,26 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ExifEditor.Views.SelectRecentWindow"
+        Title="Select Recent Scanned"
+        SizeToContent="Height"
+        Width="400"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False"
+        Background="{DynamicResource BgPrimaryBrush}">
+    <Grid Margin="20" MinWidth="350">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="Select a recently used value:"
+                   Margin="0 0 0 8"
+                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+        <ListBox Grid.Row="1" Name="RecentListBox" Classes="themed"
+                 MaxHeight="250" Margin="0 0 0 14"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Classes="accent" Content="OK" Name="OkButton" Width="80"/>
+            <Button Classes="subtle" Content="Cancel" Name="CancelButton" Width="80"/>
+        </StackPanel>
+    </Grid>
+</Window>

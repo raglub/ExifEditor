@@ -23,6 +23,7 @@ public class ImageViewModel : ViewModelBase
     private string? _artist;
     private Bitmap? _bitmap;
     private string? _description;
+    private string? _scanned;
     private string? _filePath;
     private bool _isModified = false;
     private Bitmap? _largerThumbnail;
@@ -31,10 +32,9 @@ public class ImageViewModel : ViewModelBase
     private bool _thumbnailLoading = false;
     public ICommand? _saveCommand;
     public ICommand? _showFullImageCommand;
-    public ICommand? UseDefaultArtistCommand {get; set;}
-    public ICommand? EditDefaultArtistCommand {get; set;}
     public ICommand RemoveTagCommand {get; }
     public ICommand EditTagCommand {get; }
+    public ICommand UseRecentScannedCommand {get; }
     public string? _title;
     public readonly MainWindowViewModel? _mainWindow;
     public readonly ServiceFactory _serviceFactory;
@@ -44,18 +44,29 @@ public class ImageViewModel : ViewModelBase
     public ImageViewModel(MainWindowViewModel window, ServiceFactory serviceFactory) {
         _mainWindow = window;
         _serviceFactory = serviceFactory;
-        EditDefaultArtistCommand = ReactiveCommand.CreateFromTask(async () => await EditDefaultArtist());
-        UseDefaultArtistCommand = ReactiveCommand.Create(() => UseDefaultArtist());
         RemoveTagCommand = ReactiveCommand.Create<ImageTag>(tag => {
             Tags.Remove(tag);
             IsModified = true;
         });
         EditTagCommand = ReactiveCommand.CreateFromTask<ImageTag>(async tag => await EditTag(tag));
+        UseRecentScannedCommand = ReactiveCommand.CreateFromTask(async () => await UseRecentScanned());
     }
 
     public void AddTag(double x, double y, string label) {
         Tags.Add(new ImageTag { X = x, Y = y, Label = label });
         IsModified = true;
+    }
+
+    public void MoveTag(ImageTag tag, double newX, double newY) {
+        tag.X = newX;
+        tag.Y = newY;
+        IsModified = true;
+        var index = Tags.IndexOf(tag);
+        if (index >= 0)
+        {
+            Tags.RemoveAt(index);
+            Tags.Insert(index, tag);
+        }
     }
 
     public async Task EditTag(ImageTag tag) {
@@ -100,11 +111,13 @@ public class ImageViewModel : ViewModelBase
                 var file = ImageFile.FromFile(FilePath);
                 var descriptionData = new DescriptionData {
                     Description = string.IsNullOrWhiteSpace(Description) ? null : Description,
-                    Tags = Tags.Count > 0 ? Tags.ToList() : null
+                    Tags = Tags.Count > 0 ? Tags.ToList() : null,
+                    Scanned = string.IsNullOrWhiteSpace(Scanned) ? null : Scanned
                 };
                 SetValueOfTag(file, ExifTag.ImageDescription, descriptionData.Serialize());
                 SetValueOfTag(file, ExifTag.Artist, Artist);
                 file.Save(FilePath);
+                _mainWindow?.AddRecentScanned(Scanned);
                 IsModified = false;
             });
             return _saveCommand;
@@ -125,29 +138,20 @@ public class ImageViewModel : ViewModelBase
         }
     }
 
-    public void UseDefaultArtist() {
-        Artist = _mainWindow?.DefaultArtist;
-    }
-
-    public async Task EditDefaultArtist() {        
-        var window = new EditDefaultArtistWindow();
-        window.Width = 500;
-        window.Height = 150;
-        if (_mainWindow is object) {
-            var viewModel = new EditDefaultArtistViewModel(_mainWindow);
-            EditDefaultArtistViewModel.CurrentWindow = window;
-            window.DataContext = viewModel;
-            if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+    public async Task UseRecentScanned() {
+        if (_mainWindow == null || _mainWindow.RecentScanned.Count == 0) return;
+        if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
+            && desktop.MainWindow != null)
+        {
+            var dialog = new SelectRecentWindow(_mainWindow.RecentScanned);
+            await dialog.ShowDialog(desktop.MainWindow);
+            if (dialog.SelectedValue != null)
             {
-                if (desktop?.MainWindow is object) {
-                    await window.ShowDialog(desktop.MainWindow);
-                    var artist = viewModel.Artist;
-                    _mainWindow.DefaultArtist = artist;
-                }
+                Scanned = dialog.SelectedValue;
             }
         }
     }
-    
+
 
     public string? FilePath {
         get {
@@ -169,6 +173,8 @@ public class ImageViewModel : ViewModelBase
         var descriptionData = DescriptionData.Deserialize(rawDescription);
         _description = descriptionData.Description;
         this.RaisePropertyChanged(nameof(Description));
+        _scanned = descriptionData.Scanned;
+        this.RaisePropertyChanged(nameof(Scanned));
         if (descriptionData.Tags is { Count: > 0 }) {
             foreach (var tag in descriptionData.Tags) {
                 Tags.Add(tag);
@@ -202,6 +208,14 @@ public class ImageViewModel : ViewModelBase
         set {
             IsModified = true;
             this.RaiseAndSetIfChanged(ref _description, value);
+        }
+    }
+
+    public string? Scanned {
+        get => _scanned;
+        set {
+            IsModified = true;
+            this.RaiseAndSetIfChanged(ref _scanned, value);
         }
     }
 

@@ -20,6 +20,10 @@ public class DescriptionData
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<ImageTag>? Tags { get; set; }
 
+    [JsonPropertyName("scanned")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Scanned { get; set; }
+
     public string? Serialize()
     {
         if (Tags is { Count: 0 })
@@ -28,7 +32,10 @@ public class DescriptionData
         if (string.IsNullOrWhiteSpace(Description))
             Description = null;
 
-        if (Description == null && Tags == null)
+        if (string.IsNullOrWhiteSpace(Scanned))
+            Scanned = null;
+
+        if (Description == null && Tags == null && Scanned == null)
             return null;
 
         return JsonSerializer.Serialize(this, SerializerOptions);

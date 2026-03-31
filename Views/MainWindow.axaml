@@ -98,7 +98,8 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="300"/>
-                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="44"/>
@@ -128,8 +129,9 @@
                         <Border CornerRadius="{DynamicResource MediumRadius}" ClipToBounds="True"
                                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                 Margin="0 0 0 0">
-                            <Panel Name="ImageTagPanel" Cursor="Cross" Background="Transparent"
-                                   PointerPressed="OnImagePointerPressed" ClipToBounds="True">
+                            <Panel Name="ImageTagPanel" Background="Transparent"
+                                   PointerPressed="OnImagePointerPressed"
+                                   PointerMoved="OnImagePointerMoved" ClipToBounds="True">
                                 <Image Name="PreviewImage" Source="{Binding LargerThumbnail}" Stretch="Uniform"/>
                                 <Canvas Name="TagCanvas"/>
                             </Panel>
@@ -137,21 +139,24 @@
                     </DockPanel>
 
                     <!-- Artist row -->
-                    <Label Grid.Row="2" Grid.Column="0" Classes="heading" Content="Artist:" VerticalAlignment="Center"/>
-                    <DockPanel Grid.Row="2" Grid.Column="1">
-                        <Button Classes="accent" Content="Edit Default Artist"
+                    <Label Grid.Row="2" Grid.Column="0" Classes="heading" Content="Artist:" VerticalAlignment="Center" Margin="0 8 0 0"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Classes="themed"
+                             Text="{Binding Artist}" Margin="0 8 0 0"/>
+
+                    <!-- Scanned row -->
+                    <Label Grid.Row="3" Grid.Column="0" Classes="heading"
+                           Content="Scanned:" VerticalAlignment="Center" Margin="0 8 0 0"/>
+                    <DockPanel Grid.Row="3" Grid.Column="1" Margin="0 8 0 0">
+                        <Button Classes="subtle" Content="Use Recent"
                                 Padding="10 5" Margin="5 0 0 0"
-                                Command="{Binding EditDefaultArtistCommand}" DockPanel.Dock="Right"/>
-                        <Button Classes="subtle" Content="Use Default Artist"
-                                Padding="10 5" Margin="5 0 0 0"
-                                Command="{Binding UseDefaultArtistCommand}" DockPanel.Dock="Right"/>
-                        <TextBox Classes="themed" Text="{Binding Artist}" HorizontalAlignment="Stretch"/>
+                                Command="{Binding UseRecentScannedCommand}" DockPanel.Dock="Right"/>
+                        <TextBox Classes="themed" Text="{Binding Scanned}" HorizontalAlignment="Stretch"/>
                     </DockPanel>
 
                     <!-- Tags section -->
-                    <Label Grid.Row="3" Grid.Column="0" Classes="heading"
+                    <Label Grid.Row="4" Grid.Column="0" Classes="heading"
                            Content="Tags:" VerticalAlignment="Top" Margin="0 8 0 0"/>
-                    <DockPanel Grid.Row="3" Grid.Column="1" Margin="0 8 0 0">
+                    <DockPanel Grid.Row="4" Grid.Column="1" Margin="0 8 0 0">
                         <DockPanel DockPanel.Dock="Bottom" Margin="0 4 0 0">
                             <CheckBox Name="ShowAllTagsCheckBox" Content="Show all tags"
                                       FontSize="11" IsChecked="True"
@@ -185,14 +190,14 @@
                     </DockPanel>
 
                     <!-- Description -->
-                    <Label Grid.Row="4" Grid.Column="0" Classes="heading"
+                    <Label Grid.Row="5" Grid.Column="0" Classes="heading"
                            Content="Description:" Margin="0 8 0 0" VerticalAlignment="Top"/>
-                    <TextBox Grid.Row="4" Grid.Column="1" Classes="themed"
+                    <TextBox Grid.Row="5" Grid.Column="1" Classes="themed"
                              Text="{Binding Description}" TextWrapping="Wrap"
                              Margin="0 8 0 0" AcceptsReturn="True"/>
 
                     <!-- Save button -->
-                    <Button Grid.Row="5" Grid.Column="1" Classes="success"
+                    <Button Grid.Row="6" Grid.Column="1" Classes="success"
                             Content="Save" Padding="16 7" Margin="0 8 0 0"
                             IsEnabled="{Binding IsModified}"
                             Command="{Binding SaveCommand}"

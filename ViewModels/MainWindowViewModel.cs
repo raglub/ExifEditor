@@ -55,17 +55,16 @@ public class MainWindowViewModel : ViewModelBase
 
     public ObservableCollection<ImageViewModel> Images { get;} = new ObservableCollection<ImageViewModel>();
     
-    public string? DefaultArtist
+    public List<string> RecentScanned => _appSettings.RecentScanned ??= new List<string>();
+
+    public void AddRecentScanned(string? value)
     {
-        get
-        {
-            return _appSettings?.DefaultArtist ?? "";
-        }
-        set {
-            _appSettings.DefaultArtist = value;
-            SettingsService.SaveSettings(_appSettings);
-            this.RaisePropertyChanged(nameof(DefaultArtist));
-        }
+        if (string.IsNullOrWhiteSpace(value)) return;
+        var list = RecentScanned;
+        list.Remove(value);
+        list.Insert(0, value);
+        if (list.Count > 20) list.RemoveRange(20, list.Count - 20);
+        SettingsService.SaveSettings(_appSettings);
     }
 
     public ICommand ExitApplicationCommand {get; set;}
