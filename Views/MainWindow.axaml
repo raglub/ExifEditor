@@ -97,11 +97,11 @@
                 <Grid DataContext="{Binding SelectedImage}">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="30"/>
-                        <RowDefinition Height="300"/>
+                        <RowDefinition Height="*" MinHeight="200"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="44"/>
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
@@ -122,7 +122,7 @@
                             Padding="10,4"/>
 
                     <!-- Image preview + properties -->
-                    <DockPanel Grid.Row="1" Grid.Column="1" Height="300">
+                    <DockPanel Grid.Row="1" Grid.Column="1">
                         <ListBox Classes="themed" DockPanel.Dock="Right"
                                  HorizontalAlignment="Right" Margin="8 0 0 0"
                                  ItemsSource="{Binding ImageProperties}" MaxWidth="200"/>
@@ -131,9 +131,21 @@
                                 Margin="0 0 0 0">
                             <Panel Name="ImageTagPanel" Background="Transparent"
                                    PointerPressed="OnImagePointerPressed"
-                                   PointerMoved="OnImagePointerMoved" ClipToBounds="True">
-                                <Image Name="PreviewImage" Source="{Binding LargerThumbnail}" Stretch="Uniform"/>
-                                <Canvas Name="TagCanvas"/>
+                                   PointerMoved="OnImagePointerMoved"
+                                   PointerReleased="OnImagePointerReleased"
+                                   PointerWheelChanged="OnImagePointerWheelChanged"
+                                   ClipToBounds="True">
+                                <Panel Name="ZoomableContent">
+                                    <Image Name="PreviewImage" Source="{Binding LargerThumbnail}" Stretch="Uniform"/>
+                                    <Canvas Name="TagCanvas"/>
+                                </Panel>
+                                <Border Background="{DynamicResource TagLabelBgBrush}"
+                                        CornerRadius="4" Padding="4 2"
+                                        HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                        Margin="4" IsHitTestVisible="False"
+                                        Name="ZoomIndicator" IsVisible="False">
+                                    <TextBlock Name="ZoomText" Foreground="White" FontSize="10"/>
+                                </Border>
                             </Panel>
                         </Border>
                     </DockPanel>
@@ -194,7 +206,8 @@
                            Content="Description:" Margin="0 8 0 0" VerticalAlignment="Top"/>
                     <TextBox Grid.Row="5" Grid.Column="1" Classes="themed"
                              Text="{Binding Description}" TextWrapping="Wrap"
-                             Margin="0 8 0 0" AcceptsReturn="True"/>
+                             Margin="0 8 0 0" AcceptsReturn="True"
+                             MinHeight="60" MaxHeight="80" VerticalAlignment="Top"/>
 
                     <!-- Save button -->
                     <Button Grid.Row="6" Grid.Column="1" Classes="success"

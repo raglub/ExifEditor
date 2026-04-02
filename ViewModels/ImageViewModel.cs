@@ -266,7 +266,7 @@ public class ImageViewModel : ViewModelBase
         {
             if (_largerThumbnail == null && FilePath is object) {
                 using var file = File.OpenRead(FilePath);
-                _largerThumbnail = Bitmap.DecodeToHeight(file, 300);
+                _largerThumbnail = Bitmap.DecodeToHeight(file, 800);
             }
             return _largerThumbnail;
         }

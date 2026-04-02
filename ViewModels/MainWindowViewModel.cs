@@ -191,6 +191,7 @@ public class MainWindowViewModel : ViewModelBase
                 });
                 if (result.Any()) {
                     var path = result.FirstOrDefault()?.Path.AbsolutePath;
+                    if (path == null) return;
                     this.DirPath = path;
                     await LoadImagesAsync(path, null);
                 }

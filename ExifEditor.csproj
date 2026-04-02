@@ -9,11 +9,12 @@
     <Version>0.1.0</Version>
      <Company>Michał Szyma (devszyma@gmail.com)</Company>
     <Description>The program is used for editing the Description and Artist in images saved in the Exif standard.</Description>
+    <ApplicationIcon Condition="Exists('Resources\icon.ico')">Resources\icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Models\" />
     <AvaloniaResource Include="Assets\**" />
-    <Content Include="Resources/icon.png" CopyToPublishDirectory="PreserveNewest">
+    <Content Include="Resources/icon.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest">
         <LinuxPath>/usr/share/ExifEditor/icon.png</LinuxPath>
     </Content>
     <Content Include="ExifEditor.desktop" CopyToPublishDirectory="PreserveNewest">

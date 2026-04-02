@@ -1,38 +1,157 @@
-name: CI
+name: Build and Release
 
 on:
   push:
-    branches:
-    - main
-    - develop
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [ubuntu-20.04]
+  build-linux:
+    runs-on: ubuntu-latest
     steps:
-    - name: Checkout
-      uses: actions/checkout@v1
-    - name: Setup .NET 6.x
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '6.x'
-    - name: Install dependencies
-      run: dotnet restore
-    - name: Build (linux-only) 
-      env:
-          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-      if: contains(matrix.os, 'ubuntu')  
-      run: |
-        echo ${LATEST_TAG_DISTANCE}
-        dotnet tool install -g dotnet-deb
-        dotnet deb install
-        dotnet-deb -c Release
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: ExifEditor-${{ matrix.os }}
-        path: /home/runner/work/ExifEditor/ExifEditor/bin/Release/net6.0/ExifEditor.0.1.0.deb
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Publish
+        run: dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Get version
+        id: version
+        run: echo "version=$(grep '<Version>' ExifEditor.csproj | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/' | tr -d ' ')" >> $GITHUB_OUTPUT
+
+      - name: Create tar.gz
+        run: |
+          cd bin/Release/net8.0/linux-x64/publish
+          tar -czf "$GITHUB_WORKSPACE/ExifEditor-${{ steps.version.outputs.version }}-linux-x64.tar.gz" .
+
+      - name: Create deb package
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p deb/DEBIAN
+          mkdir -p deb/usr/share/ExifEditor
+          mkdir -p deb/usr/share/applications
+          mkdir -p deb/usr/share/icons/hicolor/256x256/apps
+          cp -r bin/Release/net8.0/linux-x64/publish/* deb/usr/share/ExifEditor/
+          cp Resources/icon.png deb/usr/share/icons/hicolor/256x256/apps/exifeditor.png
+          cp ExifEditor.desktop deb/usr/share/applications/
+          chmod +x deb/usr/share/ExifEditor/ExifEditor
+          cat > deb/DEBIAN/control << CONTROL
+          Package: exifeditor
+          Version: ${VERSION}
+          Section: graphics
+          Priority: optional
+          Architecture: amd64
+          Depends: libx11-6, libfontconfig1
+          Maintainer: Michał Szyma <devszyma@gmail.com>
+          Description: ExifEditor - EXIF metadata editor
+           The program is used for editing the Description and Artist in images saved in the Exif standard.
+          CONTROL
+          dpkg-deb --build deb "ExifEditor-${VERSION}-linux-amd64.deb"
+
+      - name: Upload tar.gz
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExifEditor-linux-x64-tar
+          path: ExifEditor-*-linux-x64.tar.gz
+
+      - name: Upload deb
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExifEditor-linux-x64-deb
+          path: ExifEditor-*-linux-amd64.deb
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Convert icon to ICO
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Drawing
+          $png = [System.Drawing.Bitmap]::new("Resources\icon.png")
+          $hIcon = $png.GetHicon()
+          $icon = [System.Drawing.Icon]::FromHandle($hIcon)
+          $fs = [System.IO.FileStream]::new("Resources\icon.ico", [System.IO.FileMode]::Create)
+          $icon.Save($fs)
+          $fs.Close()
+          $icon.Dispose()
+          $png.Dispose()
+
+      - name: Publish
+        run: dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Get version
+        id: version
+        shell: pwsh
+        run: |
+          [xml]$csproj = Get-Content ExifEditor.csproj
+          $version = $csproj.Project.PropertyGroup.Version
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Create zip
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          Compress-Archive -Path "bin\Release\net8.0\win-x64\publish\*" -DestinationPath "ExifEditor-${version}-win-x64.zip"
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Build installer
+        shell: cmd
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion="${{ steps.version.outputs.version }}" setup.iss
+
+      - name: Upload zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExifEditor-win-x64-zip
+          path: ExifEditor-*-win-x64.zip
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExifEditor-win-x64-setup
+          path: ExifEditor-*-win-x64-setup.exe
+
+  release:
+    needs: [build-linux, build-windows]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/ExifEditor-linux-x64-tar/*
+            artifacts/ExifEditor-linux-x64-deb/*
+            artifacts/ExifEditor-win-x64-zip/*
+            artifacts/ExifEditor-win-x64-setup/*
