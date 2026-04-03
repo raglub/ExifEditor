@@ -1,0 +1,16 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" rx="220" fill="#2C3E50"/>
+  
+  <!-- Photo Card -->
+  <rect x="200" y="200" width="550" height="600" rx="40" fill="#ECF0F1"/>
+  <path d="M200 650L350 500L550 700L650 600L750 700V760C750 782 732 800 710 800H240C218 800 200 782 200 760V650Z" fill="#BDC3C7"/>
+  <circle cx="320" cy="350" r="50" fill="#F1C40F"/>
+  
+  <!-- Tag -->
+  <path d="M600 250H850C872 250 890 268 890 290V550L725 715C710 730 685 730 670 715L535 580C520 565 520 540 535 525L600 460V250Z" fill="#E74C3C" stroke="white" stroke-width="20"/>
+  <circle cx="750" cy="380" r="35" fill="white"/>
+  
+  <!-- Lines on tag representing metadata -->
+  <rect x="620" y="480" width="80" height="15" rx="7" fill="white" fill-opacity="0.5"/>
+  <rect x="620" y="520" width="120" height="15" rx="7" fill="white" fill-opacity="0.5"/>
+</svg>
