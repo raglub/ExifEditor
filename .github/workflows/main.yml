@@ -28,6 +28,11 @@ jobs:
             echo "VERSION=$(grep '<Version>' ExifEditor.csproj | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/' | tr -d ' ')" >> $GITHUB_OUTPUT
           fi
 
+      - name: Generate PNG from SVG (Linux)
+        run: |
+          sudo apt-get update && sudo apt-get install -y librsvg2-bin
+          rsvg-convert -w 512 -h 512 Resources/icon.svg -o Resources/icon.png
+
       - name: Restore
         run: dotnet restore
 
@@ -95,24 +100,14 @@ jobs:
             echo "VERSION=$v" >> $env:GITHUB_OUTPUT
           }
 
+      - name: Generate Icons from SVG (Windows)
+        run: |
+          # magick is pre-installed on windows-latest runners
+          magick -background none Resources/icon.svg -resize 512x512 Resources/icon.png
+          magick Resources/icon.png -define icon:auto-resize=256,128,64,48,32,16 Resources/icon.ico
+
       - name: Restore
         run: dotnet restore
-
-      - name: Generate Windows Icon
-        shell: pwsh
-        run: |
-          # Use PowerShell to create a proper Windows ICO from the PNG
-          Add-Type -AssemblyName System.Drawing
-          $pngPath = "Resources\icon.png"
-          $icoPath = "Resources\icon.ico"
-          $bmp = [System.Drawing.Bitmap]::FromFile($pngPath)
-          $hIcon = $bmp.GetHicon()
-          $icon = [System.Drawing.Icon]::FromHandle($hIcon)
-          $stream = [System.IO.FileStream]::new($icoPath, [System.IO.FileMode]::Create)
-          $icon.Save($stream)
-          $stream.Close()
-          $icon.Dispose()
-          $bmp.Dispose()
 
       - name: Publish
         run: dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ steps.get_version.outputs.VERSION }}
