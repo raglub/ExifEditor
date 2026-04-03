@@ -98,6 +98,22 @@ jobs:
       - name: Restore
         run: dotnet restore
 
+      - name: Generate Windows Icon
+        shell: pwsh
+        run: |
+          # Use PowerShell to create a proper Windows ICO from the PNG
+          Add-Type -AssemblyName System.Drawing
+          $pngPath = "Resources\icon.png"
+          $icoPath = "Resources\icon.ico"
+          $bmp = [System.Drawing.Bitmap]::FromFile($pngPath)
+          $hIcon = $bmp.GetHicon()
+          $icon = [System.Drawing.Icon]::FromHandle($hIcon)
+          $stream = [System.IO.FileStream]::new($icoPath, [System.IO.FileMode]::Create)
+          $icon.Save($stream)
+          $stream.Close()
+          $icon.Dispose()
+          $bmp.Dispose()
+
       - name: Publish
         run: dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ steps.get_version.outputs.VERSION }}
 
