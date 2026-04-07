@@ -6,11 +6,6 @@ namespace ExifEditor.Models;
 
 public class DescriptionData
 {
-    private static readonly JsonSerializerOptions SerializerOptions = new()
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        WriteIndented = false
-    };
 
     [JsonPropertyName("description")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -38,7 +33,7 @@ public class DescriptionData
         if (Description == null && Tags == null && Scanned == null)
             return null;
 
-        return JsonSerializer.Serialize(this, SerializerOptions);
+        return JsonSerializer.Serialize(this, DescriptionDataJsonContext.Default.DescriptionData);
     }
 
     public static DescriptionData Deserialize(string? raw)
@@ -51,7 +46,7 @@ public class DescriptionData
         {
             try
             {
-                return JsonSerializer.Deserialize<DescriptionData>(trimmed, SerializerOptions)
+                return JsonSerializer.Deserialize(trimmed, DescriptionDataJsonContext.Default.DescriptionData)
                        ?? new DescriptionData();
             }
             catch
@@ -62,4 +57,10 @@ public class DescriptionData
 
         return new DescriptionData { Description = raw };
     }
+}
+
+[JsonSerializable(typeof(DescriptionData))]
+[JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = false)]
+internal partial class DescriptionDataJsonContext : JsonSerializerContext
+{
 }

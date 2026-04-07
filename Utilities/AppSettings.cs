@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 public class AppSettings
 {
@@ -9,4 +10,9 @@ public class AppSettings
         public string? Theme {get; set;}
 
         public List<string>? RecentScanned {get; set;}
+}
+
+[JsonSerializable(typeof(AppSettings))]
+internal partial class AppSettingsJsonContext : JsonSerializerContext
+{
 }

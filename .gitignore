@@ -4,3 +4,4 @@ settings.json
 .vscode/
 Utilities/FileModifier.cs
 report.pdf
+publish/

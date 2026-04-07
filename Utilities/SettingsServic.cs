@@ -8,7 +8,7 @@ public class SettingsService
 
     public static void SaveSettings(AppSettings settings)
     {
-        string jsonString = JsonSerializer.Serialize(settings);
+        string jsonString = JsonSerializer.Serialize(settings, AppSettingsJsonContext.Default.AppSettings);
         File.WriteAllText(SettingsFileName, jsonString);
     }
 
@@ -17,7 +17,7 @@ public class SettingsService
         if (File.Exists(SettingsFileName))
         {
             string jsonString = File.ReadAllText(SettingsFileName);
-            var result = JsonSerializer.Deserialize<AppSettings>(jsonString);
+            var result = JsonSerializer.Deserialize(jsonString, AppSettingsJsonContext.Default.AppSettings);
             if (result is object) {
                 return result;
             } else {
