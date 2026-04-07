@@ -8,7 +8,6 @@
         x:DataType="vm:MainWindowViewModel"
         x:Class="ExifEditor.Views.MainWindow"
         Title="ExifEditor"
-        Icon="/Resources/icon.png"
         Background="{DynamicResource BgPrimaryBrush}">
     <Design.DataContext>
         <vm:MainWindowViewModel/>
