@@ -8,7 +8,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <Version>0.1.0</Version>
      <Company>Michał Szyma (devszyma@gmail.com)</Company>
-    <Description>The program is used for editing the Description and Artist in images saved in the Exif standard.</Description>
+    <Description>ExifEditor is a desktop application for viewing and editing EXIF metadata in image files. It allows you to modify the Description, Artist, and Scanned fields, tag specific areas on images with custom labels, and generate PDF reports. Supports batch processing of images within a directory.</Description>
     <ApplicationIcon Condition="Exists('Resources\icon.ico')">Resources\icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>

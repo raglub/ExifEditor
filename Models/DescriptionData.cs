@@ -60,7 +60,7 @@ public class DescriptionData
 }
 
 [JsonSerializable(typeof(DescriptionData))]
-[JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = false)]
+[JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, WriteIndented = true)]
 internal partial class DescriptionDataJsonContext : JsonSerializerContext
 {
 }

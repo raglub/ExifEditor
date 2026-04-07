@@ -118,6 +118,7 @@
                             Classes="subtle"
                             Content="Show"
                             HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
                             Command="{Binding ShowFullImageCommand}"
                             Padding="10,4"/>
 

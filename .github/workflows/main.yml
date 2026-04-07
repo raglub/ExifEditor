@@ -57,9 +57,12 @@ jobs:
           Priority: optional
           Architecture: amd64
           Depends: libx11-6, libfontconfig1
-          Maintainer: Michał Szyma <devszyma@gmail.com>
+          Maintainer: Raglub <1413586+raglub@users.noreply.github.com>
           Description: ExifEditor - EXIF metadata editor
-           The program is used for editing the Description and Artist in images saved in the Exif standard.
+           A desktop application for viewing and editing EXIF metadata in image files.
+           Allows you to modify the Description, Artist, and Scanned fields, tag specific
+           areas on images with custom labels, and generate PDF reports. Supports batch
+           processing of images within a directory.
           CONTROL
           dpkg-deb --build deb "ExifEditor-${VERSION}-linux-amd64.deb"
 
