@@ -61,6 +61,18 @@ public class ImageViewModel : ViewModelBase
         tag.X = newX;
         tag.Y = newY;
         IsModified = true;
+        RefreshTag(tag);
+    }
+
+    public void MoveLabelOffset(ImageTag tag, double offsetX, double offsetY) {
+        tag.LabelOffsetX = Math.Round(offsetX, 3);
+        tag.LabelOffsetY = Math.Round(offsetY, 3);
+        tag.Position = null;
+        IsModified = true;
+        RefreshTag(tag);
+    }
+
+    private void RefreshTag(ImageTag tag) {
         var index = Tags.IndexOf(tag);
         if (index >= 0)
         {
@@ -80,12 +92,7 @@ public class ImageViewModel : ViewModelBase
             {
                 tag.Label = dialog.TagLabel;
                 IsModified = true;
-                var index = Tags.IndexOf(tag);
-                if (index >= 0)
-                {
-                    Tags.RemoveAt(index);
-                    Tags.Insert(index, tag);
-                }
+                RefreshTag(tag);
             }
         }
     }

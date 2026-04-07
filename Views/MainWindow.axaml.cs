@@ -17,11 +17,14 @@ public partial class MainWindow : Window
     private INotifyCollectionChanged? _subscribedTags;
     private bool _showAllTags = true;
 
+    private enum DragMode { None, DragDot, DragLabel }
+    private DragMode _currentDragMode = DragMode.None;
     private ImageTag? _draggedTag;
     private bool _isDragging;
     private Point _dragStartPoint;
     private Ellipse? _dragDot;
-    private Border? _dragLabel;
+    private Control? _dragLabel;
+    private Line? _dragLine;
     private Ellipse? _dragHitArea;
 
     // Zoom & pan state
@@ -321,20 +324,35 @@ public partial class MainWindow : Window
 
         foreach (var tag in viewModel.Tags)
         {
-            var x = layout.offsetX + tag.X * layout.renderedWidth;
-            var y = layout.offsetY + tag.Y * layout.renderedHeight;
+            var dotX = layout.offsetX + tag.X * layout.renderedWidth;
+            var dotY = layout.offsetY + tag.Y * layout.renderedHeight;
+            var labelX = layout.offsetX + (tag.X + tag.EffectiveLabelOffsetX) * layout.renderedWidth;
+            var labelY = layout.offsetY + (tag.Y + tag.EffectiveLabelOffsetY) * layout.renderedHeight;
 
             var tagMarkerBrush = this.FindResource("TagMarkerBrush") as IBrush ?? new SolidColorBrush(Colors.Orange);
             var tagMarkerStrokeBrush = this.FindResource("TagMarkerStrokeBrush") as IBrush ?? new SolidColorBrush(Colors.White);
             var tagLabelBgBrush = this.FindResource("TagLabelBgBrush") as IBrush ?? new SolidColorBrush(Color.FromArgb(200, 0, 0, 0));
 
-            // Scale marker sizes inversely with zoom so they stay readable
+            // Scale sizes inversely with zoom so they stay readable
             var markerSize = 8.0 / _zoom;
             var hitAreaSize = 20.0 / _zoom;
             var fontSize = 10.0 / _zoom;
             var labelPadH = 4.0 / _zoom;
             var labelPadV = 2.0 / _zoom;
 
+            // 1. Connector line (drawn first so it's behind dot and label)
+            var line = new Line
+            {
+                StartPoint = new Point(dotX, dotY),
+                EndPoint = new Point(labelX, labelY), // updated below after label measure
+                Stroke = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255)),
+                StrokeThickness = 1.5 / _zoom,
+                IsHitTestVisible = false,
+                IsVisible = _showAllTags
+            };
+            canvas.Children.Add(line);
+
+            // 2. Dot marker
             var dot = new Ellipse
             {
                 Width = markerSize,
@@ -344,10 +362,11 @@ public partial class MainWindow : Window
                 StrokeThickness = 1.0 / _zoom,
                 IsHitTestVisible = false
             };
-            Canvas.SetLeft(dot, x - markerSize / 2);
-            Canvas.SetTop(dot, y - markerSize / 2);
+            Canvas.SetLeft(dot, dotX - markerSize / 2);
+            Canvas.SetTop(dot, dotY - markerSize / 2);
             canvas.Children.Add(dot);
 
+            // 3. Label (directly positioned on canvas)
             var label = new Border
             {
                 Background = tagLabelBgBrush,
@@ -359,43 +378,56 @@ public partial class MainWindow : Window
                     Foreground = Brushes.White,
                     FontSize = fontSize
                 },
-                IsVisible = _showAllTags,
-                IsHitTestVisible = false
+                IsHitTestVisible = true,
+                Cursor = new Cursor(StandardCursorType.Hand),
+                IsVisible = _showAllTags
             };
-            Canvas.SetLeft(label, x + 6.0 / _zoom);
-            Canvas.SetTop(label, y - 10.0 / _zoom);
+            Canvas.SetLeft(label, labelX);
+            Canvas.SetTop(label, labelY);
             canvas.Children.Add(label);
 
-            var capturedTag = tag;
-            var capturedDot = dot;
-            var capturedLabel = label;
+            // Measure label to connect line to center of its left edge
+            label.Measure(Size.Infinity);
+            var labelHeight = label.DesiredSize.Height;
+            line.EndPoint = new Point(labelX, labelY + labelHeight / 2);
 
-            var hitArea = new Ellipse
+            // 4. Dot hit area (for dragging the dot)
+            var dotHitArea = new Ellipse
             {
                 Width = hitAreaSize,
                 Height = hitAreaSize,
                 Fill = Brushes.Transparent,
                 Cursor = new Cursor(StandardCursorType.SizeAll)
             };
-            Canvas.SetLeft(hitArea, x - hitAreaSize / 2);
-            Canvas.SetTop(hitArea, y - hitAreaSize / 2);
+            Canvas.SetLeft(dotHitArea, dotX - hitAreaSize / 2);
+            Canvas.SetTop(dotHitArea, dotY - hitAreaSize / 2);
 
-            hitArea.PointerPressed += (s, e) =>
+            // Capture variables for closures
+            var capturedTag = tag;
+            var capturedDot = dot;
+            var capturedLabel = label;
+            var capturedLine = line;
+            var capturedDotHitArea = dotHitArea;
+
+            // --- Dot drag handlers ---
+            dotHitArea.PointerPressed += (s, e) =>
             {
                 if (!e.GetCurrentPoint(panel).Properties.IsLeftButtonPressed) return;
                 _draggedTag = capturedTag;
+                _currentDragMode = DragMode.DragDot;
                 _isDragging = false;
                 _dragStartPoint = ScreenToContent(e.GetPosition(panel));
                 _dragDot = capturedDot;
                 _dragLabel = capturedLabel;
-                _dragHitArea = hitArea;
-                e.Pointer.Capture(hitArea);
+                _dragLine = capturedLine;
+                _dragHitArea = capturedDotHitArea;
+                e.Pointer.Capture(dotHitArea);
                 e.Handled = true;
             };
 
-            hitArea.PointerMoved += (s, e) =>
+            dotHitArea.PointerMoved += (s, e) =>
             {
-                if (_draggedTag != capturedTag) return;
+                if (_draggedTag != capturedTag || _currentDragMode != DragMode.DragDot) return;
 
                 var currentPoint = ScreenToContent(e.GetPosition(panel));
                 if (!_isDragging)
@@ -414,21 +446,26 @@ public partial class MainWindow : Window
                     var relX = Math.Clamp((currentPoint.X - currentLayout.offsetX) / currentLayout.renderedWidth, 0, 1);
                     var relY = Math.Clamp((currentPoint.Y - currentLayout.offsetY) / currentLayout.renderedHeight, 0, 1);
 
-                    var px = currentLayout.offsetX + relX * currentLayout.renderedWidth;
-                    var py = currentLayout.offsetY + relY * currentLayout.renderedHeight;
+                    var newDotPx = currentLayout.offsetX + relX * currentLayout.renderedWidth;
+                    var newDotPy = currentLayout.offsetY + relY * currentLayout.renderedHeight;
+                    var newLabelPx = currentLayout.offsetX + (relX + capturedTag.EffectiveLabelOffsetX) * currentLayout.renderedWidth;
+                    var newLabelPy = currentLayout.offsetY + (relY + capturedTag.EffectiveLabelOffsetY) * currentLayout.renderedHeight;
 
-                    Canvas.SetLeft(_dragDot!, px - markerSize / 2);
-                    Canvas.SetTop(_dragDot!, py - markerSize / 2);
-                    Canvas.SetLeft(_dragLabel!, px + 6.0 / _zoom);
-                    Canvas.SetTop(_dragLabel!, py - 10.0 / _zoom);
-                    Canvas.SetLeft(_dragHitArea!, px - hitAreaSize / 2);
-                    Canvas.SetTop(_dragHitArea!, py - hitAreaSize / 2);
+                    Canvas.SetLeft(_dragDot!, newDotPx - markerSize / 2);
+                    Canvas.SetTop(_dragDot!, newDotPy - markerSize / 2);
+                    Canvas.SetLeft(_dragLabel!, newLabelPx);
+                    Canvas.SetTop(_dragLabel!, newLabelPy);
+                    Canvas.SetLeft(_dragHitArea!, newDotPx - hitAreaSize / 2);
+                    Canvas.SetTop(_dragHitArea!, newDotPy - hitAreaSize / 2);
+                    _dragLine!.StartPoint = new Point(newDotPx, newDotPy);
+                    var dragLabelH = _dragLabel!.DesiredSize.Height;
+                    _dragLine!.EndPoint = new Point(newLabelPx, newLabelPy + dragLabelH / 2);
                 }
             };
 
-            hitArea.PointerReleased += (s, e) =>
+            dotHitArea.PointerReleased += (s, e) =>
             {
-                if (_draggedTag == capturedTag)
+                if (_draggedTag == capturedTag && _currentDragMode == DragMode.DragDot)
                 {
                     if (_isDragging)
                     {
@@ -441,19 +478,105 @@ public partial class MainWindow : Window
                             viewModel.MoveTag(capturedTag, Math.Round(relX, 3), Math.Round(relY, 3));
                         }
                     }
-                    _draggedTag = null;
-                    _isDragging = false;
-                    _dragDot = null;
-                    _dragLabel = null;
-                    _dragHitArea = null;
+                    ResetDragState();
                 }
                 e.Pointer.Capture(null);
                 e.Handled = true;
             };
 
-            hitArea.PointerEntered += (s, e) => { if (!_showAllTags) label.IsVisible = true; };
-            hitArea.PointerExited += (s, e) => { if (!_showAllTags && !_isDragging) label.IsVisible = false; };
-            canvas.Children.Add(hitArea);
+            // --- Label drag handlers ---
+            label.PointerPressed += (s, e) =>
+            {
+                if (!e.GetCurrentPoint(panel).Properties.IsLeftButtonPressed) return;
+                _draggedTag = capturedTag;
+                _currentDragMode = DragMode.DragLabel;
+                _isDragging = false;
+                _dragStartPoint = ScreenToContent(e.GetPosition(panel));
+                _dragLabel = capturedLabel;
+                _dragLine = capturedLine;
+                e.Pointer.Capture(label);
+                e.Handled = true;
+            };
+
+            label.PointerMoved += (s, e) =>
+            {
+                if (_draggedTag != capturedTag || _currentDragMode != DragMode.DragLabel) return;
+
+                var currentPoint = ScreenToContent(e.GetPosition(panel));
+                if (!_isDragging)
+                {
+                    var dx = currentPoint.X - _dragStartPoint.X;
+                    var dy = currentPoint.Y - _dragStartPoint.Y;
+                    if (Math.Sqrt(dx * dx + dy * dy) > 3)
+                        _isDragging = true;
+                }
+
+                if (_isDragging)
+                {
+                    var currentLayout = GetImageLayout();
+                    if (!currentLayout.isValid) return;
+
+                    Canvas.SetLeft(_dragLabel!, currentPoint.X);
+                    Canvas.SetTop(_dragLabel!, currentPoint.Y);
+
+                    var dragLabelH = _dragLabel!.DesiredSize.Height;
+                    _dragLine!.EndPoint = new Point(currentPoint.X, currentPoint.Y + dragLabelH / 2);
+                }
+            };
+
+            label.PointerReleased += (s, e) =>
+            {
+                if (_draggedTag == capturedTag && _currentDragMode == DragMode.DragLabel)
+                {
+                    if (_isDragging)
+                    {
+                        var currentPoint = ScreenToContent(e.GetPosition(panel));
+                        var currentLayout = GetImageLayout();
+                        if (currentLayout.isValid)
+                        {
+                            var labelRelX = (currentPoint.X - currentLayout.offsetX) / currentLayout.renderedWidth;
+                            var labelRelY = (currentPoint.Y - currentLayout.offsetY) / currentLayout.renderedHeight;
+                            var offsetX = labelRelX - capturedTag.X;
+                            var offsetY = labelRelY - capturedTag.Y;
+                            viewModel.MoveLabelOffset(capturedTag, offsetX, offsetY);
+                        }
+                    }
+                    ResetDragState();
+                }
+                e.Pointer.Capture(null);
+                e.Handled = true;
+            };
+
+            // Show/hide on hover when "Show all tags" is unchecked
+            dotHitArea.PointerEntered += (s, e) =>
+            {
+                if (!_showAllTags)
+                {
+                    capturedLabel.IsVisible = true;
+                    capturedLine.IsVisible = true;
+                }
+            };
+            dotHitArea.PointerExited += (s, e) =>
+            {
+                if (!_showAllTags && !_isDragging)
+                {
+                    capturedLabel.IsVisible = false;
+                    capturedLine.IsVisible = false;
+                }
+            };
+
+            canvas.Children.Add(dotHitArea);
         }
+    }
+
+    private void ResetDragState()
+    {
+        _draggedTag = null;
+        _currentDragMode = DragMode.None;
+        _isDragging = false;
+        _dragDot = null;
+        _dragLabel = null;
+        _dragLine = null;
+        _dragHitArea = null;
     }
 }
