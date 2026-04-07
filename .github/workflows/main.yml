@@ -39,11 +39,6 @@ jobs:
       - name: Publish
         run: dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ steps.get_version.outputs.VERSION }}
 
-      - name: Create tar.gz
-        run: |
-          cd bin/Release/net8.0/linux-x64/publish
-          tar -czf "$GITHUB_WORKSPACE/ExifEditor-${{ steps.get_version.outputs.VERSION }}-linux-x64.tar.gz" .
-
       - name: Create deb package
         run: |
           VERSION="${{ steps.get_version.outputs.VERSION }}"
@@ -73,7 +68,6 @@ jobs:
         with:
           name: linux-artifacts
           path: |
-            ExifEditor-*-linux-x64.tar.gz
             ExifEditor-*-linux-amd64.deb
 
   build-windows:
@@ -112,11 +106,6 @@ jobs:
       - name: Publish
         run: dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:Version=${{ steps.get_version.outputs.VERSION }}
 
-      - name: Create zip
-        shell: pwsh
-        run: |
-          Compress-Archive -Path "bin\Release\net8.0\win-x64\publish\*" -DestinationPath "ExifEditor-${{ steps.get_version.outputs.VERSION }}-win-x64.zip"
-
       - name: Install Inno Setup
         run: choco install innosetup -y --no-progress
 
@@ -130,7 +119,6 @@ jobs:
         with:
           name: windows-artifacts
           path: |
-            ExifEditor-*-win-x64.zip
             ExifEditor-*-win-x64-setup.exe
 
   release:
@@ -153,7 +141,5 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            all-artifacts/linux-artifacts/*.tar.gz
             all-artifacts/linux-artifacts/*.deb
-            all-artifacts/windows-artifacts/*.zip
             all-artifacts/windows-artifacts/*.exe
