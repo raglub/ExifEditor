@@ -90,7 +90,7 @@ public class PdfGeneratorService {
                                 if (descriptionData.Tags is { Count: > 0 }) {
                                     x.Item().Text("Tags:").Bold();
                                     foreach (var tag in descriptionData.Tags) {
-                                        x.Item().Text($"  - {tag.Label} ({tag.X * 100:F0}%, {tag.Y * 100:F0}%)");
+                                        x.Item().Text($"  - {tag.Label} ({tag.AnchorX * 100:F0}%, {tag.AnchorY * 100:F0}%)");
                                     }
                                 }
                             });

@@ -47,6 +47,8 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = viewModel;
 
+        Opened += async (_, _) => await viewModel.InitializeAsync();
+
         var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Resources", "icon.png");
         if (File.Exists(iconPath))
             Icon = new WindowIcon(iconPath);
@@ -324,10 +326,10 @@ public partial class MainWindow : Window
 
         foreach (var tag in viewModel.Tags)
         {
-            var dotX = layout.offsetX + tag.X * layout.renderedWidth;
-            var dotY = layout.offsetY + tag.Y * layout.renderedHeight;
-            var labelX = layout.offsetX + (tag.X + tag.EffectiveLabelOffsetX) * layout.renderedWidth;
-            var labelY = layout.offsetY + (tag.Y + tag.EffectiveLabelOffsetY) * layout.renderedHeight;
+            var dotX = layout.offsetX + tag.AnchorX * layout.renderedWidth;
+            var dotY = layout.offsetY + tag.AnchorY * layout.renderedHeight;
+            var labelX = layout.offsetX + (tag.AnchorX + tag.EffectiveLabelOffsetX) * layout.renderedWidth;
+            var labelY = layout.offsetY + (tag.AnchorY + tag.EffectiveLabelOffsetY) * layout.renderedHeight;
 
             var tagMarkerBrush = this.FindResource("TagMarkerBrush") as IBrush ?? new SolidColorBrush(Colors.Orange);
             var tagMarkerStrokeBrush = this.FindResource("TagMarkerStrokeBrush") as IBrush ?? new SolidColorBrush(Colors.White);
@@ -340,13 +342,15 @@ public partial class MainWindow : Window
             var labelPadH = 4.0 / _zoom;
             var labelPadV = 2.0 / _zoom;
 
-            // 1. Connector line (drawn first so it's behind dot and label)
+            // 1. Connector line — single white stroke with slight opacity so it
+            //    stays readable on both light and dark backgrounds.
             var line = new Line
             {
                 StartPoint = new Point(dotX, dotY),
                 EndPoint = new Point(labelX, labelY), // updated below after label measure
                 Stroke = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255)),
                 StrokeThickness = 1.5 / _zoom,
+                StrokeLineCap = PenLineCap.Round,
                 IsHitTestVisible = false,
                 IsVisible = _showAllTags
             };
@@ -370,8 +374,10 @@ public partial class MainWindow : Window
             var label = new Border
             {
                 Background = tagLabelBgBrush,
-                CornerRadius = new CornerRadius(4.0 / _zoom),
-                Padding = new Thickness(labelPadH, labelPadV),
+                BorderBrush = Brushes.White,
+                BorderThickness = new Thickness(1.5 / _zoom),
+                CornerRadius = new CornerRadius(8.0 / _zoom),
+                Padding = new Thickness(labelPadH + 2.0 / _zoom, labelPadV + 1.0 / _zoom),
                 Child = new TextBlock
                 {
                     Text = tag.Label,
@@ -386,10 +392,14 @@ public partial class MainWindow : Window
             Canvas.SetTop(label, labelY);
             canvas.Children.Add(label);
 
-            // Measure label to connect line to center of its left edge
+            // Measure label so we can pick the connector attachment point.
             label.Measure(Size.Infinity);
+            var labelWidth = label.DesiredSize.Width;
             var labelHeight = label.DesiredSize.Height;
-            line.EndPoint = new Point(labelX, labelY + labelHeight / 2);
+            var (initialEnd, initialLineNeeded) = ComputeConnectorEnd(
+                dotX, dotY, labelX, labelY, labelWidth, labelHeight);
+            line.EndPoint = initialEnd;
+            if (!initialLineNeeded) line.IsVisible = false;
 
             // 4. Dot hit area (for dragging the dot)
             var dotHitArea = new Ellipse
@@ -407,6 +417,7 @@ public partial class MainWindow : Window
             var capturedDot = dot;
             var capturedLabel = label;
             var capturedLine = line;
+            var capturedLineNeeded = initialLineNeeded;
             var capturedDotHitArea = dotHitArea;
 
             // --- Dot drag handlers ---
@@ -457,9 +468,13 @@ public partial class MainWindow : Window
                     Canvas.SetTop(_dragLabel!, newLabelPy);
                     Canvas.SetLeft(_dragHitArea!, newDotPx - hitAreaSize / 2);
                     Canvas.SetTop(_dragHitArea!, newDotPy - hitAreaSize / 2);
-                    _dragLine!.StartPoint = new Point(newDotPx, newDotPy);
+                    var dragLabelW = _dragLabel!.DesiredSize.Width;
                     var dragLabelH = _dragLabel!.DesiredSize.Height;
-                    _dragLine!.EndPoint = new Point(newLabelPx, newLabelPy + dragLabelH / 2);
+                    var (dragEnd, dragVisible) = ComputeConnectorEnd(
+                        newDotPx, newDotPy, newLabelPx, newLabelPy, dragLabelW, dragLabelH);
+                    _dragLine!.StartPoint = new Point(newDotPx, newDotPy);
+                    _dragLine!.EndPoint = dragEnd;
+                    _dragLine!.IsVisible = dragVisible;
                 }
             };
 
@@ -519,8 +534,12 @@ public partial class MainWindow : Window
                     Canvas.SetLeft(_dragLabel!, currentPoint.X);
                     Canvas.SetTop(_dragLabel!, currentPoint.Y);
 
+                    var dragLabelW = _dragLabel!.DesiredSize.Width;
                     var dragLabelH = _dragLabel!.DesiredSize.Height;
-                    _dragLine!.EndPoint = new Point(currentPoint.X, currentPoint.Y + dragLabelH / 2);
+                    var (dragEnd, dragVisible) = ComputeConnectorEnd(
+                        dotX, dotY, currentPoint.X, currentPoint.Y, dragLabelW, dragLabelH);
+                    _dragLine!.EndPoint = dragEnd;
+                    _dragLine!.IsVisible = dragVisible;
                 }
             };
 
@@ -536,8 +555,8 @@ public partial class MainWindow : Window
                         {
                             var labelRelX = (currentPoint.X - currentLayout.offsetX) / currentLayout.renderedWidth;
                             var labelRelY = (currentPoint.Y - currentLayout.offsetY) / currentLayout.renderedHeight;
-                            var offsetX = labelRelX - capturedTag.X;
-                            var offsetY = labelRelY - capturedTag.Y;
+                            var offsetX = labelRelX - capturedTag.AnchorX;
+                            var offsetY = labelRelY - capturedTag.AnchorY;
                             viewModel.MoveLabelOffset(capturedTag, offsetX, offsetY);
                         }
                     }
@@ -553,7 +572,7 @@ public partial class MainWindow : Window
                 if (!_showAllTags)
                 {
                     capturedLabel.IsVisible = true;
-                    capturedLine.IsVisible = true;
+                    capturedLine.IsVisible = capturedLineNeeded;
                 }
             };
             dotHitArea.PointerExited += (s, e) =>
@@ -567,6 +586,35 @@ public partial class MainWindow : Window
 
             canvas.Children.Add(dotHitArea);
         }
+    }
+
+    private static (Point endPoint, bool visible) ComputeConnectorEnd(
+        double dotX, double dotY,
+        double labelLeft, double labelTop, double labelWidth, double labelHeight)
+    {
+        var labelRight = labelLeft + labelWidth;
+        var labelBottom = labelTop + labelHeight;
+        var midX = labelLeft + labelWidth / 2;
+        var midY = labelTop + labelHeight / 2;
+
+        // Dot is inside the label bounds → no connector at all.
+        if (dotX >= labelLeft && dotX <= labelRight && dotY >= labelTop && dotY <= labelBottom)
+            return (new Point(midX, midY), false);
+
+        // Label is fully to the right of the dot → attach to its left edge center.
+        if (dotX < labelLeft)
+            return (new Point(labelLeft, midY), true);
+
+        // Label is fully to the left of the dot → attach to its right edge center.
+        if (dotX > labelRight)
+            return (new Point(labelRight, midY), true);
+
+        // Dot is horizontally between the label edges → keep the connector
+        // strictly vertical by anchoring it at the dot's X coordinate.
+        if (dotY < labelTop)
+            return (new Point(dotX, labelTop), true);
+
+        return (new Point(dotX, labelBottom), true);
     }
 
     private void ResetDragState()

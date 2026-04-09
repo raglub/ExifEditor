@@ -57,6 +57,7 @@
             <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3"
                          Classes="themed"
                          IsVisible="{Binding IsLoading}"
+                         IsIndeterminate="{Binding IsLoadingIndeterminate}"
                          Minimum="0" Maximum="{Binding LoadingTotal}"
                          Value="{Binding LoadingProgress}"
                          Height="3"/>

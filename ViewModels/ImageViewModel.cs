@@ -53,13 +53,13 @@ public class ImageViewModel : ViewModelBase
     }
 
     public void AddTag(double x, double y, string label) {
-        Tags.Add(new ImageTag { X = x, Y = y, Label = label });
+        Tags.Add(new ImageTag { AnchorX = x, AnchorY = y, Label = label });
         IsModified = true;
     }
 
     public void MoveTag(ImageTag tag, double newX, double newY) {
-        tag.X = newX;
-        tag.Y = newY;
+        tag.AnchorX = newX;
+        tag.AnchorY = newY;
         IsModified = true;
         RefreshTag(tag);
     }

@@ -18,11 +18,22 @@ public class ImageTag
     private const double DefaultOffsetX = 0.05;
     private const double DefaultOffsetY = -0.05;
 
+    [JsonPropertyName("anchorX")]
+    public double AnchorX { get; set; }
+
+    [JsonPropertyName("anchorY")]
+    public double AnchorY { get; set; }
+
+    // Backwards-compat: older photos have the anchor stored under "x"/"y".
+    // These setters are write-only on (de)serialization and feed into AnchorX/AnchorY.
+    // JsonIgnore on the getter side via WhenWritingDefault keeps new files clean.
     [JsonPropertyName("x")]
-    public double X { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public double LegacyX { get => 0; set => AnchorX = value; }
 
     [JsonPropertyName("y")]
-    public double Y { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public double LegacyY { get => 0; set => AnchorY = value; }
 
     [JsonPropertyName("label")]
     public string Label { get; set; } = string.Empty;
@@ -80,5 +91,5 @@ public class ImageTag
     }
 
     [JsonIgnore]
-    public string PositionDisplay => $"({X * 100:F0}%, {Y * 100:F0}%)";
+    public string PositionDisplay => $"({AnchorX * 100:F0}%, {AnchorY * 100:F0}%)";
 }

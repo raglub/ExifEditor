@@ -7,7 +7,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <Version>0.1.0</Version>
-     <Company>Michał Szyma (devszyma@gmail.com)</Company>
+    <ReleaseYear>2026</ReleaseYear>
+     <Company>Raglub &lt;1413586+raglub@users.noreply.github.com&gt;</Company>
     <Description>ExifEditor is a desktop application for viewing and editing EXIF metadata in image files. It allows you to modify the Description, Artist, and Scanned fields, tag specific areas on images with custom labels, and generate PDF reports. Supports batch processing of images within a directory.</Description>
     <ApplicationIcon Condition="Exists('Resources\icon.ico')">Resources\icon.ico</ApplicationIcon>
   </PropertyGroup>
@@ -20,6 +21,10 @@
     <Content Include="ExifEditor.desktop" CopyToPublishDirectory="PreserveNewest">
         <LinuxPath>/usr/share/applications/ExifEditor.desktop</LinuxPath>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="ReleaseYear" Value="$(ReleaseYear)" />
   </ItemGroup>
 
 
