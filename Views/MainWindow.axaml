@@ -4,6 +4,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:ExifEditor.ViewModels"
         xmlns:models="using:ExifEditor.Models"
+        xmlns:controls="using:ExifEditor.Controls"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:DataType="vm:MainWindowViewModel"
         x:Class="ExifEditor.Views.MainWindow"
@@ -12,6 +13,7 @@
     <Design.DataContext>
         <vm:MainWindowViewModel/>
     </Design.DataContext>
+    <Panel>
     <DockPanel>
         <Menu DockPanel.Dock="Top" Background="{DynamicResource BgSecondaryBrush}">
             <MenuItem Header="_File">
@@ -220,5 +222,27 @@
                 </Grid>
             </Border>
         </Grid>
+
     </DockPanel>
+
+    <!-- PDF generation overlay -->
+    <Border IsVisible="{Binding IsGeneratingPdf}"
+            Background="#AA000000"
+            IsHitTestVisible="True">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+            <controls:CircularProgressControl
+                Width="120" Height="120"
+                Value="{Binding PdfProgress}"
+                Maximum="{Binding PdfTotal}"
+                StrokeThickness="8"
+                TrackBrush="{DynamicResource SurfaceBrush}"
+                IndicatorBrush="{DynamicResource AccentBrush}"
+                TextBrush="{DynamicResource TextPrimaryBrush}"/>
+            <TextBlock Text="Generating PDF..."
+                       Foreground="{DynamicResource TextPrimaryBrush}"
+                       FontSize="14"
+                       HorizontalAlignment="Center"/>
+        </StackPanel>
+    </Border>
+    </Panel>
 </Window>

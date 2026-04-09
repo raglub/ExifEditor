@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -97,6 +98,16 @@ public class ImageViewModel : ViewModelBase
         }
     }
 
+    private static string GetSoftwareTag()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
+        var versionAttribute = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+        var version = versionAttribute?.InformationalVersion?.Split('+', 2)[0]
+                      ?? assembly.GetName().Version?.ToString()
+                      ?? "unknown";
+        return $"ExifEditor {version}";
+    }
+
     private void SetValueOfTag(ImageFile file, ExifTag tag, string? value){
         if (string.IsNullOrEmpty(value)) {
             if (file.Properties.Contains(tag)){
@@ -123,6 +134,7 @@ public class ImageViewModel : ViewModelBase
                 };
                 SetValueOfTag(file, ExifTag.ImageDescription, descriptionData.Serialize());
                 SetValueOfTag(file, ExifTag.Artist, Artist);
+                SetValueOfTag(file, ExifTag.Software, GetSoftwareTag());
                 file.Save(FilePath);
                 _mainWindow?.AddRecentScanned(Scanned);
                 IsModified = false;

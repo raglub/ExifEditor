@@ -38,6 +38,9 @@ public class MainWindowViewModel : ViewModelBase
     private int _loadingProgress;
     private int _loadingTotal;
     private CancellationTokenSource? _loadingCts;
+    private bool _isGeneratingPdf;
+    private int _pdfProgress;
+    private int _pdfTotal;
 
     #region Properties
 
@@ -98,6 +101,21 @@ public class MainWindowViewModel : ViewModelBase
 
     public bool IsLoadingIndeterminate => _isLoading && _loadingTotal == 0;
 
+    public bool IsGeneratingPdf {
+        get => _isGeneratingPdf;
+        set => this.RaiseAndSetIfChanged(ref _isGeneratingPdf, value);
+    }
+
+    public int PdfProgress {
+        get => _pdfProgress;
+        set => this.RaiseAndSetIfChanged(ref _pdfProgress, value);
+    }
+
+    public int PdfTotal {
+        get => _pdfTotal;
+        set => this.RaiseAndSetIfChanged(ref _pdfTotal, value);
+    }
+
     public ImageViewModel? SelectedImage
     {
         get {
@@ -134,8 +152,18 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     private async Task GeneratePDFReportAsync() {
-
-        await _pdfGenerator.GenerateReportAsync(_appSettings.DirPath);
+        IsGeneratingPdf = true;
+        PdfProgress = 0;
+        PdfTotal = 0;
+        var progress = new Progress<(int current, int total)>(p => {
+            PdfTotal = p.total;
+            PdfProgress = p.current;
+        });
+        try {
+            await _pdfGenerator.GenerateReportAsync(_appSettings.DirPath, progress);
+        } finally {
+            IsGeneratingPdf = false;
+        }
     }
 
     private async Task LoadImagesAsync(string? dirPath, string? selectedFilePath) {

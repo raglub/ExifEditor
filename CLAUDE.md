@@ -14,17 +14,6 @@ All content in this project (code comments, commit messages, PR descriptions, do
 
 Never commit automatically. All commits must be done manually by the user.
 
-## Build & Run Commands
-
-
-## Architecture
-
-### Tech Stack
-
-### Layered Structure (all inside `TaskSpace.Web`)
-
-### Security
-
 ### Key Patterns
 
 - Prefer async/await over spawning new threads (Task.Run). Use Task.Run only for genuinely CPU-bound work (e.g., bitmap decoding), not for I/O or lightweight operations.
