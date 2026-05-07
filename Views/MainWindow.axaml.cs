@@ -371,6 +371,70 @@ public partial class MainWindow : Window
             canvas.Children.Add(dot);
 
             // 3. Label (directly positioned on canvas)
+            var labelText = new TextBlock
+            {
+                Text = tag.Label,
+                Foreground = Brushes.White,
+                FontSize = fontSize,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+
+            var iconButtonBg = new SolidColorBrush(Color.FromArgb(60, 255, 255, 255));
+            var iconButtonHoverBg = new SolidColorBrush(Color.FromArgb(140, 255, 255, 255));
+            var iconPadH = 5.0 / _zoom;
+            var iconPadV = 1.0 / _zoom;
+            var iconCornerRadius = new CornerRadius(6.0 / _zoom);
+            var iconMargin = new Thickness(5.0 / _zoom, 0, 0, 0);
+            var iconCursor = new Cursor(StandardCursorType.Hand);
+
+            var editIcon = new Border
+            {
+                Background = iconButtonBg,
+                CornerRadius = iconCornerRadius,
+                Padding = new Thickness(iconPadH, iconPadV),
+                Margin = iconMargin,
+                Cursor = iconCursor,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Child = new TextBlock
+                {
+                    Text = "✎",
+                    Foreground = Brushes.White,
+                    FontSize = fontSize,
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                }
+            };
+
+            var deleteIcon = new Border
+            {
+                Background = iconButtonBg,
+                CornerRadius = iconCornerRadius,
+                Padding = new Thickness(iconPadH, iconPadV),
+                Margin = iconMargin,
+                Cursor = iconCursor,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Child = new TextBlock
+                {
+                    Text = "✕",
+                    Foreground = Brushes.White,
+                    FontSize = fontSize,
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                }
+            };
+
+            ToolTip.SetTip(editIcon, "Edit tag");
+            ToolTip.SetTip(deleteIcon, "Delete tag");
+
+            editIcon.PointerEntered += (s, e) => editIcon.Background = iconButtonHoverBg;
+            editIcon.PointerExited += (s, e) => editIcon.Background = iconButtonBg;
+            deleteIcon.PointerEntered += (s, e) => deleteIcon.Background = iconButtonHoverBg;
+            deleteIcon.PointerExited += (s, e) => deleteIcon.Background = iconButtonBg;
+
+            var labelStack = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                Children = { labelText, editIcon, deleteIcon }
+            };
+
             var label = new Border
             {
                 Background = tagLabelBgBrush,
@@ -378,15 +442,29 @@ public partial class MainWindow : Window
                 BorderThickness = new Thickness(1.5 / _zoom),
                 CornerRadius = new CornerRadius(8.0 / _zoom),
                 Padding = new Thickness(labelPadH + 2.0 / _zoom, labelPadV + 1.0 / _zoom),
-                Child = new TextBlock
-                {
-                    Text = tag.Label,
-                    Foreground = Brushes.White,
-                    FontSize = fontSize
-                },
+                Child = labelStack,
                 IsHitTestVisible = true,
-                Cursor = new Cursor(StandardCursorType.Hand),
+                Cursor = new Cursor(StandardCursorType.SizeAll),
                 IsVisible = _showAllTags
+            };
+
+            var capturedTagForIcons = tag;
+            editIcon.PointerPressed += async (s, e) =>
+            {
+                e.Handled = true;
+                e.Pointer.Capture(null);
+                await viewModel.EditTag(capturedTagForIcons);
+            };
+            deleteIcon.PointerPressed += async (s, e) =>
+            {
+                e.Handled = true;
+                e.Pointer.Capture(null);
+                var dialog = new ConfirmWindow($"Are you sure you want to delete the tag \"{capturedTagForIcons.Label}\"?");
+                await dialog.ShowDialog(this);
+                if (dialog.Confirmed)
+                {
+                    viewModel.RemoveTag(capturedTagForIcons);
+                }
             };
             Canvas.SetLeft(label, labelX);
             Canvas.SetTop(label, labelY);

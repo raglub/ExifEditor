@@ -58,6 +58,11 @@ public class ImageViewModel : ViewModelBase
         IsModified = true;
     }
 
+    public void RemoveTag(ImageTag tag) {
+        Tags.Remove(tag);
+        IsModified = true;
+    }
+
     public void MoveTag(ImageTag tag, double newX, double newY) {
         tag.AnchorX = newX;
         tag.AnchorY = newY;
