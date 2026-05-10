@@ -212,7 +212,7 @@ public class ImageViewModel : ViewModelBase
 
         IsModified = false;
         foreach (var property in file.Properties) {
-            if (property.Name == nameof(ExifTag.Artist) || property.Name == nameof(ExifTag.ImageDescription)) {
+            if (property.Name == nameof(ExifTag.ImageDescription)) {
                 continue;
             }
             ImageProperties.Add($"{property.Name}: {property.Value}");
