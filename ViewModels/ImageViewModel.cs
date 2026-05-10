@@ -30,7 +30,9 @@ public class ImageViewModel : ViewModelBase
     private Bitmap? _largerThumbnail;
     private Bitmap? _originalBitmap;
     private bool _metadataLoaded = false;
+    private bool _metadataLoading = false;
     private bool _thumbnailLoading = false;
+    private bool _largerThumbnailLoading = false;
     public ICommand? _saveCommand;
     public ICommand? _showFullImageCommand;
     public ICommand RemoveTagCommand {get; }
@@ -186,37 +188,56 @@ public class ImageViewModel : ViewModelBase
         }
     }
 
+    public bool IsMetadataLoading {
+        get => _metadataLoading;
+        private set => this.RaiseAndSetIfChanged(ref _metadataLoading, value);
+    }
+
     public void EnsureMetadataLoaded() {
-        if (_metadataLoaded || string.IsNullOrEmpty(_filePath)) return;
+        if (_metadataLoaded || _metadataLoading || string.IsNullOrEmpty(_filePath)) return;
         _metadataLoaded = true;
+        IsMetadataLoading = true;
 
-        var imageService = _serviceFactory.CreateImageService(_filePath);
-        var file = ImageFile.FromFile(_filePath);
+        var path = _filePath;
+        Task.Run(() => {
+            try {
+                var imageService = _serviceFactory.CreateImageService(path);
+                var file = ImageFile.FromFile(path);
 
-        var rawDescription = imageService.IsDescription() ? imageService.GetDescription() : null;
-        var descriptionData = DescriptionData.Deserialize(rawDescription);
-        _description = descriptionData.Description;
-        this.RaisePropertyChanged(nameof(Description));
-        _scanned = descriptionData.Scanned;
-        this.RaisePropertyChanged(nameof(Scanned));
-        if (descriptionData.Tags is { Count: > 0 }) {
-            foreach (var tag in descriptionData.Tags) {
-                Tags.Add(tag);
+                var rawDescription = imageService.IsDescription() ? imageService.GetDescription() : null;
+                var descriptionData = DescriptionData.Deserialize(rawDescription);
+                var artist = imageService.IsArtist() ? imageService.GetArtist() : null;
+
+                var properties = new List<string>();
+                foreach (var property in file.Properties) {
+                    if (property.Name == nameof(ExifTag.ImageDescription)) continue;
+                    properties.Add($"{property.Name}: {property.Value}");
+                }
+
+                Dispatcher.UIThread.Post(() => {
+                    _description = descriptionData.Description;
+                    this.RaisePropertyChanged(nameof(Description));
+                    _scanned = descriptionData.Scanned;
+                    this.RaisePropertyChanged(nameof(Scanned));
+                    if (descriptionData.Tags is { Count: > 0 }) {
+                        foreach (var tag in descriptionData.Tags) {
+                            Tags.Add(tag);
+                        }
+                    }
+                    if (artist != null) {
+                        _artist = artist;
+                        this.RaisePropertyChanged(nameof(Artist));
+                    }
+                    foreach (var p in properties) {
+                        ImageProperties.Add(p);
+                    }
+                    IsModified = false;
+                    IsMetadataLoading = false;
+                });
+            } catch {
+                Dispatcher.UIThread.Post(() => IsMetadataLoading = false);
             }
-        }
-
-        if (imageService.IsArtist()) {
-            _artist = imageService.GetArtist();
-            this.RaisePropertyChanged(nameof(Artist));
-        }
-
-        IsModified = false;
-        foreach (var property in file.Properties) {
-            if (property.Name == nameof(ExifTag.ImageDescription)) {
-                continue;
-            }
-            ImageProperties.Add($"{property.Name}: {property.Value}");
-        }
+        });
     }
 
     public string? Artist {
@@ -263,11 +284,20 @@ public class ImageViewModel : ViewModelBase
 
     public string? FileName { get; set; }
 
+    public bool IsThumbnailLoading {
+        get => _thumbnailLoading && _bitmap == null;
+    }
+
+    public bool IsLargerThumbnailLoading {
+        get => _largerThumbnailLoading && _largerThumbnail == null;
+    }
+
     public Bitmap? Thumbnail {
         get
         {
             if (_bitmap == null && FilePath is not null && !_thumbnailLoading) {
                 _thumbnailLoading = true;
+                this.RaisePropertyChanged(nameof(IsThumbnailLoading));
                 Task.Run(() => {
                     try {
                         using var file = File.OpenRead(FilePath);
@@ -275,9 +305,13 @@ public class ImageViewModel : ViewModelBase
                         Dispatcher.UIThread.InvokeAsync(() => {
                             _bitmap = bitmap;
                             this.RaisePropertyChanged(nameof(Thumbnail));
+                            this.RaisePropertyChanged(nameof(IsThumbnailLoading));
                         });
                     } catch {
-                        _thumbnailLoading = false;
+                        Dispatcher.UIThread.InvokeAsync(() => {
+                            _thumbnailLoading = false;
+                            this.RaisePropertyChanged(nameof(IsThumbnailLoading));
+                        });
                     }
                 });
             }
@@ -288,9 +322,26 @@ public class ImageViewModel : ViewModelBase
     public Bitmap? LargerThumbnail {
         get
         {
-            if (_largerThumbnail == null && FilePath is object) {
-                using var file = File.OpenRead(FilePath);
-                _largerThumbnail = Bitmap.DecodeToHeight(file, 800);
+            if (_largerThumbnail == null && FilePath is not null && !_largerThumbnailLoading) {
+                _largerThumbnailLoading = true;
+                this.RaisePropertyChanged(nameof(IsLargerThumbnailLoading));
+                var path = FilePath;
+                Task.Run(() => {
+                    try {
+                        using var file = File.OpenRead(path);
+                        var bitmap = Bitmap.DecodeToHeight(file, 800);
+                        Dispatcher.UIThread.InvokeAsync(() => {
+                            _largerThumbnail = bitmap;
+                            this.RaisePropertyChanged(nameof(LargerThumbnail));
+                            this.RaisePropertyChanged(nameof(IsLargerThumbnailLoading));
+                        });
+                    } catch {
+                        Dispatcher.UIThread.InvokeAsync(() => {
+                            _largerThumbnailLoading = false;
+                            this.RaisePropertyChanged(nameof(IsLargerThumbnailLoading));
+                        });
+                    }
+                });
             }
             return _largerThumbnail;
         }

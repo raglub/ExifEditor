@@ -80,7 +80,15 @@
                     <DataTemplate>
                         <DockPanel>
                             <Border DockPanel.Dock="Top" CornerRadius="{DynamicResource SmallRadius}" ClipToBounds="True">
-                                <Image Source="{Binding Thumbnail}" Width="200" Height="100"/>
+                                <Panel Width="200" Height="100">
+                                    <Image Source="{Binding Thumbnail}" Stretch="Uniform"/>
+                                    <ProgressBar Classes="themed"
+                                                 IsVisible="{Binding IsThumbnailLoading}"
+                                                 IsIndeterminate="True"
+                                                 Width="80" Height="3"
+                                                 HorizontalAlignment="Center"
+                                                 VerticalAlignment="Center"/>
+                                </Panel>
                             </Border>
                             <TextBlock Text="{Binding Title}"
                                        VerticalAlignment="Bottom"
@@ -141,6 +149,12 @@
                                     <Image Name="PreviewImage" Source="{Binding LargerThumbnail}" Stretch="Uniform"/>
                                     <Canvas Name="TagCanvas"/>
                                 </Panel>
+                                <ProgressBar Classes="themed"
+                                             IsVisible="{Binding IsLargerThumbnailLoading}"
+                                             IsIndeterminate="True"
+                                             Width="160" Height="4"
+                                             HorizontalAlignment="Center"
+                                             VerticalAlignment="Center"/>
                                 <Border Background="{DynamicResource TagLabelBgBrush}"
                                         CornerRadius="4" Padding="4 2"
                                         HorizontalAlignment="Right" VerticalAlignment="Bottom"

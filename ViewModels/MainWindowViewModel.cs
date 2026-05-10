@@ -198,14 +198,14 @@ public class MainWindowViewModel : ViewModelBase
             return;
         }
 
-        const int batchSize = 10;
+        const int batchSize = 4;
         ImageViewModel? pendingSelection = null;
 
         for (int i = 0; i < imagePaths.Count; i += batchSize) {
             if (token.IsCancellationRequested) return;
 
-            // Yield before each batch so the UI thread can repaint and stay responsive.
-            await Task.Yield();
+            // Yield at Background priority so the UI can fully repaint between batches.
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
 
             var end = Math.Min(i + batchSize, imagePaths.Count);
             for (int j = i; j < end; j++) {

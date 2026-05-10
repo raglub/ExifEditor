@@ -47,7 +47,13 @@ public partial class MainWindow : Window
         InitializeComponent();
         DataContext = viewModel;
 
-        Opened += async (_, _) => await viewModel.InitializeAsync();
+        Opened += (_, _) =>
+        {
+            // Defer loading until after the first paint so the window appears immediately.
+            Avalonia.Threading.Dispatcher.UIThread.Post(
+                async () => await viewModel.InitializeAsync(),
+                Avalonia.Threading.DispatcherPriority.Background);
+        };
 
         var iconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Resources", "icon.png");
         if (File.Exists(iconPath))
