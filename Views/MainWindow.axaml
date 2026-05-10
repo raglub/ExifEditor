@@ -90,7 +90,7 @@
                                                  VerticalAlignment="Center"/>
                                 </Panel>
                             </Border>
-                            <TextBlock Text="{Binding Title}"
+                            <TextBlock Text="{Binding FileLabel}"
                                        VerticalAlignment="Bottom"
                                        Margin="0 6 0 0"
                                        DockPanel.Dock="Bottom"
@@ -109,6 +109,7 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="30"/>
                         <RowDefinition Height="*" MinHeight="200"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
@@ -155,6 +156,15 @@
                                              Width="160" Height="4"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center"/>
+                                <Border Background="#B3F5DE8A"
+                                        BorderBrush="#66000000" BorderThickness="1"
+                                        CornerRadius="3" Padding="8 4"
+                                        HorizontalAlignment="Left" VerticalAlignment="Top"
+                                        Margin="8" IsHitTestVisible="False"
+                                        IsVisible="{Binding Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                                    <TextBlock Text="{Binding Title}" Foreground="#222"
+                                               FontSize="13" FontWeight="SemiBold"/>
+                                </Border>
                                 <Border Background="{DynamicResource TagLabelBgBrush}"
                                         CornerRadius="4" Padding="4 2"
                                         HorizontalAlignment="Right" VerticalAlignment="Bottom"
@@ -166,10 +176,16 @@
                         </Border>
                     </DockPanel>
 
-                    <!-- Scanned row -->
+                    <!-- Title row -->
                     <Label Grid.Row="2" Grid.Column="0" Classes="heading"
+                           Content="Title:" VerticalAlignment="Center" Margin="0 8 0 0"/>
+                    <TextBox Grid.Row="2" Grid.Column="1" Classes="themed"
+                             Text="{Binding Title}" Margin="0 8 0 0"/>
+
+                    <!-- Scanned row -->
+                    <Label Grid.Row="3" Grid.Column="0" Classes="heading"
                            Content="Scanned:" VerticalAlignment="Center" Margin="0 8 0 0"/>
-                    <Grid Grid.Row="2" Grid.Column="1" Margin="0 8 0 0">
+                    <Grid Grid.Row="3" Grid.Column="1" Margin="0 8 0 0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="RightCol"/>
@@ -182,9 +198,9 @@
                     </Grid>
 
                     <!-- Tags section -->
-                    <Label Grid.Row="3" Grid.Column="0" Classes="heading"
+                    <Label Grid.Row="4" Grid.Column="0" Classes="heading"
                            Content="Tags:" VerticalAlignment="Top" Margin="0 8 0 0"/>
-                    <Grid Grid.Row="3" Grid.Column="1" Margin="0 8 0 0">
+                    <Grid Grid.Row="4" Grid.Column="1" Margin="0 8 0 0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="RightCol"/>
@@ -237,9 +253,9 @@
                     </Grid>
 
                     <!-- Description + Save -->
-                    <Label Grid.Row="4" Grid.Column="0" Classes="heading"
+                    <Label Grid.Row="5" Grid.Column="0" Classes="heading"
                            Content="Description:" Margin="0 8 0 0" VerticalAlignment="Top"/>
-                    <Grid Grid.Row="4" Grid.Column="1" Margin="0 8 0 0">
+                    <Grid Grid.Row="5" Grid.Column="1" Margin="0 8 0 0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="RightCol"/>

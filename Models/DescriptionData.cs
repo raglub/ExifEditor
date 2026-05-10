@@ -7,6 +7,10 @@ namespace ExifEditor.Models;
 public class DescriptionData
 {
 
+    [JsonPropertyName("title")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Title { get; set; }
+
     [JsonPropertyName("description")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Description { get; set; }
@@ -24,13 +28,16 @@ public class DescriptionData
         if (Tags is { Count: 0 })
             Tags = null;
 
+        if (string.IsNullOrWhiteSpace(Title))
+            Title = null;
+
         if (string.IsNullOrWhiteSpace(Description))
             Description = null;
 
         if (string.IsNullOrWhiteSpace(Scanned))
             Scanned = null;
 
-        if (Description == null && Tags == null && Scanned == null)
+        if (Title == null && Description == null && Tags == null && Scanned == null)
             return null;
 
         return JsonSerializer.Serialize(this, DescriptionDataJsonContext.Default.DescriptionData);

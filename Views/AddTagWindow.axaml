@@ -15,7 +15,11 @@
         <TextBlock Grid.Row="0" Text="Enter label (e.g. first name and last name):"
                    Margin="0 0 0 8"
                    Foreground="{DynamicResource TextSecondaryBrush}"/>
-        <TextBox Grid.Row="1" Name="LabelTextBox" Classes="themed" Margin="0 0 0 14"/>
+        <AutoCompleteBox Grid.Row="1" Name="LabelBox"
+                         Margin="0 0 0 14"
+                         FilterMode="ContainsOrdinal"
+                         MinimumPrefixLength="0"
+                         MinimumPopulateDelay="0:0:0.05"/>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
             <Button Classes="accent" Content="OK" Name="OkButton" Width="80"/>
             <Button Classes="subtle" Content="Cancel" Name="CancelButton" Width="80"/>

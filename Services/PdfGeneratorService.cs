@@ -58,18 +58,30 @@ public class PdfGeneratorService {
                 foreach(var imagePath in imagePaths) {
                     var imageService = _serviceFactory.CreateImageService(imagePath);
                     var imageName = Path.GetFileNameWithoutExtension(imagePath);
+                    var descriptionData = DescriptionData.Deserialize(imageService.GetDescription());
                     container.Page(page =>
                     {
                         page.Size(PageSizes.A4);
                         page.Margin(2, Unit.Centimetre);
                         page.PageColor(Colors.White);
                         page.DefaultTextStyle(x => x.FontSize(12));
-                        
-                        page.Header()
-                            .Text($"Image: {imageName}")
-                            .Bold().FontSize(24).FontColor(Colors.Black);
-                        
-                        var descriptionData = DescriptionData.Deserialize(imageService.GetDescription());
+
+                        page.Header().Column(col =>
+                        {
+                            if (!string.IsNullOrWhiteSpace(descriptionData.Title))
+                            {
+                                col.Item()
+                                    .Background("#F5DE8A")
+                                    .Border(1).BorderColor("#80000000")
+                                    .PaddingVertical(4).PaddingHorizontal(8)
+                                    .Text(descriptionData.Title)
+                                    .SemiBold().FontSize(20).FontColor("#222222");
+                            }
+                            col.Item()
+                                .PaddingTop(descriptionData.Title is null ? 0 : 6)
+                                .Text($"Image: {imageName}")
+                                .Bold().FontSize(20).FontColor(Colors.Black);
+                        });
 
                         // A4 content area: 170mm wide x ~257mm tall (after 2cm margins + header/footer)
                         // Image zone: 2/3 of content height, description zone: 1/3

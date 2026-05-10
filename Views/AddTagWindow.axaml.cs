@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Input;
 
@@ -7,20 +8,27 @@ public partial class AddTagWindow : Window
 {
     public string? TagLabel { get; private set; }
 
-    public AddTagWindow() : this(null) {}
+    public AddTagWindow() : this(null, null) {}
 
-    public AddTagWindow(string? initialLabel)
+    public AddTagWindow(string? initialLabel) : this(initialLabel, null) {}
+
+    public AddTagWindow(string? initialLabel, IEnumerable<string>? suggestions)
     {
         InitializeComponent();
 
         var okButton = this.FindControl<Button>("OkButton")!;
         var cancelButton = this.FindControl<Button>("CancelButton")!;
-        var textBox = this.FindControl<TextBox>("LabelTextBox")!;
+        var labelBox = this.FindControl<AutoCompleteBox>("LabelBox")!;
+
+        if (suggestions != null)
+        {
+            labelBox.ItemsSource = suggestions;
+        }
 
         if (!string.IsNullOrEmpty(initialLabel))
         {
             Title = "Edit Tag";
-            textBox.Text = initialLabel;
+            labelBox.Text = initialLabel;
         }
         else
         {
@@ -29,7 +37,7 @@ public partial class AddTagWindow : Window
 
         okButton.Click += (s, e) =>
         {
-            TagLabel = textBox.Text;
+            TagLabel = labelBox.Text;
             Close();
         };
 
@@ -39,10 +47,9 @@ public partial class AddTagWindow : Window
             Close();
         };
 
-        textBox.AttachedToVisualTree += (s, e) =>
+        labelBox.AttachedToVisualTree += (s, e) =>
         {
-            textBox.Focus();
-            textBox.SelectAll();
+            labelBox.Focus();
         };
     }
 
@@ -50,7 +57,7 @@ public partial class AddTagWindow : Window
     {
         if (e.Key == Key.Enter)
         {
-            TagLabel = this.FindControl<TextBox>("LabelTextBox")?.Text;
+            TagLabel = this.FindControl<AutoCompleteBox>("LabelBox")?.Text;
             Close();
         }
         else if (e.Key == Key.Escape)

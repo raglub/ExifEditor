@@ -15,6 +15,7 @@ namespace ExifEditor.Views;
 public partial class MainWindow : Window
 {
     private INotifyCollectionChanged? _subscribedTags;
+    private ImageViewModel? _subscribedImage;
     private bool _showAllTags = true;
 
     private enum DragMode { None, DragDot, DragLabel }
@@ -75,6 +76,7 @@ public partial class MainWindow : Window
             {
                 ResetZoom();
                 SubscribeToTagChanges();
+                SubscribeToImageChanges();
                 UpdateTagMarkers();
             }
         };
@@ -184,6 +186,25 @@ public partial class MainWindow : Window
 
         if (_subscribedTags != null)
             _subscribedTags.CollectionChanged += OnTagsCollectionChanged;
+    }
+
+    private void SubscribeToImageChanges()
+    {
+        if (_subscribedImage != null)
+            _subscribedImage.PropertyChanged -= OnSelectedImagePropertyChanged;
+
+        _subscribedImage = (DataContext as MainWindowViewModel)?.SelectedImage;
+
+        if (_subscribedImage != null)
+            _subscribedImage.PropertyChanged += OnSelectedImagePropertyChanged;
+    }
+
+    private void OnSelectedImagePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ImageViewModel.LargerThumbnail))
+        {
+            UpdateTagMarkers();
+        }
     }
 
     private void OnTagsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -296,7 +317,8 @@ public partial class MainWindow : Window
         // the panel from "eating" the first click after dialog closes
         e.Pointer.Capture(null);
 
-        var dialog = new AddTagWindow();
+        var mainVm = DataContext as MainWindowViewModel;
+        var dialog = new AddTagWindow(null, mainVm?.KnownTags);
         await dialog.ShowDialog(this);
 
         if (!string.IsNullOrWhiteSpace(dialog.TagLabel))

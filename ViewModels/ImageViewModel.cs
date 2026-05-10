@@ -24,6 +24,7 @@ public class ImageViewModel : ViewModelBase
     private string? _artist;
     private Bitmap? _bitmap;
     private string? _description;
+    private string? _title;
     private string? _scanned;
     private string? _filePath;
     private bool _isModified = false;
@@ -38,7 +39,6 @@ public class ImageViewModel : ViewModelBase
     public ICommand RemoveTagCommand {get; }
     public ICommand EditTagCommand {get; }
     public ICommand UseRecentScannedCommand {get; }
-    public string? _title;
     public readonly MainWindowViewModel? _mainWindow;
     public readonly ServiceFactory _serviceFactory;
 
@@ -57,6 +57,7 @@ public class ImageViewModel : ViewModelBase
 
     public void AddTag(double x, double y, string label) {
         Tags.Add(new ImageTag { AnchorX = x, AnchorY = y, Label = label });
+        _mainWindow?.RegisterTag(label);
         IsModified = true;
     }
 
@@ -93,12 +94,13 @@ public class ImageViewModel : ViewModelBase
         if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             && desktop.MainWindow != null)
         {
-            var dialog = new AddTagWindow(tag.Label);
+            var dialog = new AddTagWindow(tag.Label, _mainWindow?.KnownTags);
             await dialog.ShowDialog(desktop.MainWindow);
 
             if (!string.IsNullOrWhiteSpace(dialog.TagLabel))
             {
                 tag.Label = dialog.TagLabel;
+                _mainWindow?.RegisterTag(dialog.TagLabel);
                 IsModified = true;
                 RefreshTag(tag);
             }
@@ -135,6 +137,7 @@ public class ImageViewModel : ViewModelBase
             {
                 var file = ImageFile.FromFile(FilePath);
                 var descriptionData = new DescriptionData {
+                    Title = string.IsNullOrWhiteSpace(Title) ? null : Title,
                     Description = string.IsNullOrWhiteSpace(Description) ? null : Description,
                     Tags = Tags.Count > 0 ? Tags.ToList() : null,
                     Scanned = string.IsNullOrWhiteSpace(Scanned) ? null : Scanned
@@ -215,6 +218,8 @@ public class ImageViewModel : ViewModelBase
                 }
 
                 Dispatcher.UIThread.Post(() => {
+                    _title = descriptionData.Title;
+                    this.RaisePropertyChanged(nameof(Title));
                     _description = descriptionData.Description;
                     this.RaisePropertyChanged(nameof(Description));
                     _scanned = descriptionData.Scanned;
@@ -222,6 +227,7 @@ public class ImageViewModel : ViewModelBase
                     if (descriptionData.Tags is { Count: > 0 }) {
                         foreach (var tag in descriptionData.Tags) {
                             Tags.Add(tag);
+                            _mainWindow?.RegisterTag(tag.Label);
                         }
                     }
                     if (artist != null) {
@@ -256,6 +262,14 @@ public class ImageViewModel : ViewModelBase
         }
     }
 
+    public string? Title {
+        get => _title;
+        set {
+            IsModified = true;
+            this.RaiseAndSetIfChanged(ref _title, value);
+        }
+    }
+
     public string? Scanned {
         get => _scanned;
         set {
@@ -264,7 +278,7 @@ public class ImageViewModel : ViewModelBase
         }
     }
 
-    public string? Title {
+    public string? FileLabel {
         get {
             var result = FileName;
             if (IsModified) {
@@ -278,7 +292,7 @@ public class ImageViewModel : ViewModelBase
         get => _isModified;
         set {
             this.RaiseAndSetIfChanged(ref _isModified, value);
-            this.RaisePropertyChanged(nameof(Title));
+            this.RaisePropertyChanged(nameof(FileLabel));
         }
     }
 

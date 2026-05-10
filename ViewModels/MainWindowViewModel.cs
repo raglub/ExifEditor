@@ -58,7 +58,18 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     public ObservableCollection<ImageViewModel> Images { get;} = new ObservableCollection<ImageViewModel>();
-    
+
+    public ObservableCollection<string> KnownTags { get; } = new ObservableCollection<string>();
+
+    public void RegisterTag(string? label) {
+        if (string.IsNullOrWhiteSpace(label)) return;
+        var trimmed = label.Trim();
+        foreach (var existing in KnownTags) {
+            if (string.Equals(existing, trimmed, StringComparison.OrdinalIgnoreCase)) return;
+        }
+        KnownTags.Add(trimmed);
+    }
+
     public List<string> RecentScanned => _appSettings.RecentScanned ??= new List<string>();
 
     public void AddRecentScanned(string? value)
@@ -176,6 +187,7 @@ public class MainWindowViewModel : ViewModelBase
         LoadingTotal = 0;
 
         Images.Clear();
+        KnownTags.Clear();
         _selectedImage = null;
         this.RaisePropertyChanged(nameof(SelectedImage));
 
@@ -223,6 +235,10 @@ public class MainWindowViewModel : ViewModelBase
         var finalSelection = pendingSelection ?? (Images.Count > 0 ? Images[0] : null);
         IsLoading = false;
 
+        // Background scan: collect tags from every image's EXIF for autocomplete.
+        var pathsForScan = imagePaths.ToList();
+        _ = Task.Run(() => ScanKnownTags(pathsForScan, token), token);
+
         if (finalSelection != null) {
             // Defer the EXIF read (triggered by the SelectedImage setter) so the
             // last loading frame can paint before we hit the disk again.
@@ -230,6 +246,28 @@ public class MainWindowViewModel : ViewModelBase
                 if (token.IsCancellationRequested) return;
                 SelectedImage = finalSelection;
             }, DispatcherPriority.Background);
+        }
+    }
+
+    private void ScanKnownTags(List<string> paths, CancellationToken token) {
+        foreach (var path in paths) {
+            if (token.IsCancellationRequested) return;
+            try {
+                var imageService = _serviceFactory.CreateImageService(path);
+                if (!imageService.IsDescription()) continue;
+                var data = Models.DescriptionData.Deserialize(imageService.GetDescription());
+                if (data.Tags is not { Count: > 0 }) continue;
+                var labels = data.Tags
+                    .Select(t => t.Label)
+                    .Where(l => !string.IsNullOrWhiteSpace(l))
+                    .ToList();
+                if (labels.Count == 0) continue;
+                Dispatcher.UIThread.Post(() => {
+                    foreach (var label in labels) RegisterTag(label);
+                });
+            } catch {
+                // ignore unreadable files
+            }
         }
     }
 
