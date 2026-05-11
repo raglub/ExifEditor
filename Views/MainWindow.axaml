@@ -65,15 +65,21 @@
                          Height="3"/>
 
             <!-- Image list -->
-            <ListBox Classes="themed"
+            <ListBox x:Name="ImagesList" Classes="themed"
                      ItemsSource="{Binding Images}"
                      SelectedItem="{Binding SelectedImage}"
                      Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
                 <ListBox.Styles>
-                    <Style Selector="ListBoxItem">
-                        <Setter Property="BorderThickness" Value="0 0 0 1"/>
+                    <Style Selector="ListBox#ImagesList ListBoxItem">
+                        <Setter Property="BorderThickness" Value="3 0 0 1"/>
                         <Setter Property="Padding" Value="8"/>
                         <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}"/>
+                    </Style>
+                    <Style Selector="ListBox#ImagesList ListBoxItem:selected">
+                        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                    </Style>
+                    <Style Selector="ListBox#ImagesList ListBoxItem:selected /template/ ContentPresenter">
+                        <Setter Property="Background" Value="{DynamicResource SurfaceHoverBrush}"/>
                     </Style>
                 </ListBox.Styles>
                 <ListBox.ItemTemplate>
@@ -190,7 +196,12 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="RightCol"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Grid.Column="0" Classes="themed" Text="{Binding Scanned}"/>
+                        <AutoCompleteBox Grid.Column="0"
+                                         Text="{Binding Scanned, Mode=TwoWay}"
+                                         ItemsSource="{ReflectionBinding $parent[Window].DataContext.RecentScanned}"
+                                         FilterMode="ContainsOrdinal"
+                                         MinimumPrefixLength="0"
+                                         MinimumPopulateDelay="0:0:0.05"/>
                         <Button Grid.Column="1" Classes="subtle" Content="Use Recent"
                                 Padding="10 5" Margin="5 0 0 0"
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"

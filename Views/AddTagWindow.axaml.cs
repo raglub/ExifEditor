@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using System.Linq;
 
 namespace ExifEditor.Views;
 
@@ -47,9 +50,23 @@ public partial class AddTagWindow : Window
             Close();
         };
 
-        labelBox.AttachedToVisualTree += (s, e) =>
+        Opened += (s, e) =>
         {
-            labelBox.Focus();
+            Dispatcher.UIThread.Post(() =>
+            {
+                var inner = labelBox.GetVisualDescendants()
+                    .OfType<TextBox>()
+                    .FirstOrDefault();
+                if (inner != null)
+                {
+                    inner.Focus();
+                    inner.SelectAll();
+                }
+                else
+                {
+                    labelBox.Focus();
+                }
+            }, DispatcherPriority.Loaded);
         };
     }
 

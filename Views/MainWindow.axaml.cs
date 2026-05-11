@@ -87,7 +87,31 @@ public partial class MainWindow : Window
             imageTagPanel.SizeChanged += (s, e) => UpdateTagMarkers();
         }
 
+        var imagesList = this.FindControl<ListBox>("ImagesList");
+        if (imagesList != null)
+        {
+            imagesList.SelectionChanged += (s, e) => CenterSelectedItem(imagesList);
+        }
+
         SetupZoomTransform();
+    }
+
+    private void CenterSelectedItem(ListBox list)
+    {
+        if (list.SelectedItem == null) return;
+        list.ScrollIntoView(list.SelectedItem);
+
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (list.ContainerFromItem(list.SelectedItem) is not Control container) return;
+            if (list.Scroll is not ScrollViewer scroll) return;
+
+            var pt = container.TranslatePoint(new Point(0, container.Bounds.Height / 2), scroll);
+            if (pt is null) return;
+
+            var delta = pt.Value.Y - scroll.Viewport.Height / 2;
+            scroll.Offset = new Vector(scroll.Offset.X, scroll.Offset.Y + delta);
+        }, Avalonia.Threading.DispatcherPriority.Background);
     }
 
     private void SetupZoomTransform()
