@@ -376,8 +376,9 @@ public class MainWindowViewModel : ViewModelBase
         var result = await box.ShowAsync();
     }
 
-    private async Task ExitApplication() {
+    private Task ExitApplication() {
         Environment.Exit(0);
+        return Task.CompletedTask;
     }
 
     private void SwitchTheme(AppTheme theme) {

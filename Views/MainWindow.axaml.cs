@@ -48,6 +48,8 @@ public partial class MainWindow : Window
     private const double MaxZoom = 5.0;
     private const double ZoomStep = 1.15;
 
+    public MainWindow() : this(null!) {}
+
     public MainWindow(MainWindowViewModel viewModel)
     {
         InitializeComponent();

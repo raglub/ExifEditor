@@ -135,17 +135,24 @@ public class ImageViewModel : ViewModelBase
         get {
             _saveCommand = _saveCommand ?? ReactiveCommand.CreateFromTask(async () =>
             {
-                var file = ImageFile.FromFile(FilePath);
+                var path = FilePath;
                 var descriptionData = new DescriptionData {
                     Title = string.IsNullOrWhiteSpace(Title) ? null : Title,
                     Description = string.IsNullOrWhiteSpace(Description) ? null : Description,
                     Tags = Tags.Count > 0 ? Tags.ToList() : null,
                     Scanned = string.IsNullOrWhiteSpace(Scanned) ? null : Scanned
                 };
-                SetValueOfTag(file, ExifTag.ImageDescription, descriptionData.Serialize());
-                SetValueOfTag(file, ExifTag.Artist, Artist);
-                SetValueOfTag(file, ExifTag.Software, GetSoftwareTag());
-                file.Save(FilePath);
+                var serializedDescription = descriptionData.Serialize();
+                var artist = Artist;
+                var software = GetSoftwareTag();
+                await Task.Run(() =>
+                {
+                    var file = ImageFile.FromFile(path);
+                    SetValueOfTag(file, ExifTag.ImageDescription, serializedDescription);
+                    SetValueOfTag(file, ExifTag.Artist, artist);
+                    SetValueOfTag(file, ExifTag.Software, software);
+                    file.Save(path);
+                });
                 _mainWindow?.AddRecentScanned(Scanned);
                 IsModified = false;
             });
@@ -154,8 +161,8 @@ public class ImageViewModel : ViewModelBase
     }
 
     public ICommand ShowFullImageCommand {
-        get {;
-            _showFullImageCommand = _showFullImageCommand ?? ReactiveCommand.CreateFromTask(async () =>
+        get {
+            _showFullImageCommand = _showFullImageCommand ?? ReactiveCommand.Create(() =>
             {
                 var window = new ImageWindow();
                 window.DataContext = this;

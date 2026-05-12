@@ -46,11 +46,11 @@ public class ImageTag
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public double? LabelOffsetY { get; set; }
 
-    #pragma warning disable CS0612 // Suppress obsolete warning for backwards compatibility
+    #pragma warning disable CS0612, CS0618 // Suppress obsolete warning for backwards compatibility
     [JsonPropertyName("position")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public TagPosition? Position { get; set; }
-    #pragma warning restore CS0612
+    #pragma warning restore CS0612, CS0618
 
     [JsonIgnore]
     public double EffectiveLabelOffsetX
@@ -58,7 +58,7 @@ public class ImageTag
         get
         {
             if (LabelOffsetX.HasValue) return LabelOffsetX.Value;
-            #pragma warning disable CS0612
+            #pragma warning disable CS0612, CS0618
             return Position switch
             {
                 TagPosition.Top => 0.0,
@@ -67,7 +67,7 @@ public class ImageTag
                 TagPosition.Right => 0.08,
                 _ => DefaultOffsetX
             };
-            #pragma warning restore CS0612
+            #pragma warning restore CS0612, CS0618
         }
     }
 
@@ -77,7 +77,7 @@ public class ImageTag
         get
         {
             if (LabelOffsetY.HasValue) return LabelOffsetY.Value;
-            #pragma warning disable CS0612
+            #pragma warning disable CS0612, CS0618
             return Position switch
             {
                 TagPosition.Top => -0.06,
@@ -86,7 +86,7 @@ public class ImageTag
                 TagPosition.Right => 0.0,
                 _ => DefaultOffsetY
             };
-            #pragma warning restore CS0612
+            #pragma warning restore CS0612, CS0618
         }
     }
 

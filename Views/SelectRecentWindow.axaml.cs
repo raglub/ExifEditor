@@ -8,6 +8,8 @@ public partial class SelectRecentWindow : Window
 {
     public string? SelectedValue { get; private set; }
 
+    public SelectRecentWindow() : this(new List<string>()) {}
+
     public SelectRecentWindow(List<string> recentValues)
     {
         InitializeComponent();
