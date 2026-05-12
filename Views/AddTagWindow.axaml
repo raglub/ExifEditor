@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:svc="using:ExifEditor.Services"
         x:Class="ExifEditor.Views.AddTagWindow"
         Title="Tag"
         SizeToContent="WidthAndHeight"
@@ -12,7 +13,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Enter label (e.g. first name and last name):"
+        <TextBlock Grid.Row="0" Text="{Binding EnterLabel, Source={x:Static svc:LocalizationService.Current}}"
                    Margin="0 0 0 8"
                    Foreground="{DynamicResource TextSecondaryBrush}"/>
         <AutoCompleteBox Grid.Row="1" Name="LabelBox"
@@ -21,8 +22,8 @@
                          MinimumPrefixLength="0"
                          MinimumPopulateDelay="0:0:0.05"/>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Classes="accent" Content="OK" Name="OkButton" Width="80"/>
-            <Button Classes="subtle" Content="Cancel" Name="CancelButton" Width="80"/>
+            <Button Classes="accent" Content="{Binding Ok, Source={x:Static svc:LocalizationService.Current}}" Name="OkButton" Width="80"/>
+            <Button Classes="subtle" Content="{Binding Cancel, Source={x:Static svc:LocalizationService.Current}}" Name="CancelButton" Width="80"/>
         </StackPanel>
     </Grid>
 </Window>

@@ -9,6 +9,8 @@ public class AppSettings
 
         public string? Theme {get; set;}
 
+        public string? Language {get; set;}
+
         public List<string>? RecentScanned {get; set;}
 }
 

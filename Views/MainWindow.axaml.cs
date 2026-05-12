@@ -10,6 +10,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using ExifEditor.Models;
+using ExifEditor.Services;
 using ExifEditor.ViewModels;
 
 namespace ExifEditor.Views;
@@ -539,8 +540,8 @@ public partial class MainWindow : Window
                 }
             };
 
-            ToolTip.SetTip(editIcon, "Edit tag");
-            ToolTip.SetTip(deleteIcon, "Delete tag");
+            ToolTip.SetTip(editIcon, LocalizationService.Current.TooltipEditTag);
+            ToolTip.SetTip(deleteIcon, LocalizationService.Current.TooltipDeleteTag);
 
             editIcon.PointerEntered += (s, e) => editIcon.Background = iconButtonHoverBg;
             editIcon.PointerExited += (s, e) => editIcon.Background = iconButtonBg;
@@ -644,7 +645,7 @@ public partial class MainWindow : Window
             {
                 e.Handled = true;
                 e.Pointer.Capture(null);
-                var dialog = new ConfirmWindow($"Are you sure you want to delete the tag \"{capturedTagForIcons.Label}\"?");
+                var dialog = new ConfirmWindow(LocalizationService.Current.ConfirmDeleteTag(capturedTagForIcons.Label));
                 await dialog.ShowDialog(this);
                 if (dialog.Confirmed)
                 {

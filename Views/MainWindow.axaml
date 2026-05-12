@@ -5,6 +5,7 @@
         xmlns:vm="using:ExifEditor.ViewModels"
         xmlns:models="using:ExifEditor.Models"
         xmlns:controls="using:ExifEditor.Controls"
+        xmlns:svc="using:ExifEditor.Services"
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:DataType="vm:MainWindowViewModel"
         x:Class="ExifEditor.Views.MainWindow"
@@ -16,19 +17,24 @@
     <Panel>
     <DockPanel>
         <Menu DockPanel.Dock="Top" Background="{DynamicResource BgSecondaryBrush}">
-            <MenuItem Header="_File">
-                <MenuItem Header="_Open Folder..." Command="{Binding SelectDirectoryCommand}"/>
+            <MenuItem Header="{Binding MenuFile, Source={x:Static svc:LocalizationService.Current}}">
+                <MenuItem Header="{Binding MenuOpenFolder, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding SelectDirectoryCommand}"/>
                 <Separator/>
-                <MenuItem Header="_Exit" Command="{Binding ExitApplicationCommand}"/>
+                <MenuItem Header="{Binding MenuExit, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding ExitApplicationCommand}"/>
             </MenuItem>
-            <MenuItem Header="_Tools">
-                <MenuItem Header="Generate PDF Report" Command="{Binding GeneratePDFReportCommand}"/>
+            <MenuItem Header="{Binding MenuTools, Source={x:Static svc:LocalizationService.Current}}">
+                <MenuItem Header="{Binding MenuGeneratePdf, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding GeneratePDFReportCommand}"/>
                 <Separator/>
-                <MenuItem Header="Theme: Ocean Blue" Command="{Binding SwitchToOceanBlueCommand}"/>
-                <MenuItem Header="Theme: Violet Cyan" Command="{Binding SwitchToVioletCyanCommand}"/>
+                <MenuItem Header="{Binding MenuThemeOcean, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding SwitchToOceanBlueCommand}"/>
+                <MenuItem Header="{Binding MenuThemeViolet, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding SwitchToVioletCyanCommand}"/>
+                <Separator/>
+                <MenuItem Header="{Binding MenuLanguage, Source={x:Static svc:LocalizationService.Current}}">
+                    <MenuItem Header="{Binding MenuLanguageEnglish, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding SwitchToEnglishCommand}"/>
+                    <MenuItem Header="{Binding MenuLanguagePolish, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding SwitchToPolishCommand}"/>
+                </MenuItem>
             </MenuItem>
-            <MenuItem Header="_Help">
-                <MenuItem Header="About" Command="{Binding ShowAboutCommand}"/>
+            <MenuItem Header="{Binding MenuHelp, Source={x:Static svc:LocalizationService.Current}}">
+                <MenuItem Header="{Binding MenuAbout, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding ShowAboutCommand}"/>
             </MenuItem>
         </Menu>
 
@@ -51,7 +57,7 @@
                        Foreground="{DynamicResource TextSecondaryBrush}"/>
             <Button Grid.Row="0" Grid.Column="3"
                     Classes="accent"
-                    Content="Select Directory"
+                    Content="{Binding SelectDirectory, Source={x:Static svc:LocalizationService.Current}}"
                     Command="{Binding SelectDirectoryCommand}"
                     VerticalAlignment="Center" HorizontalAlignment="Right"/>
 
@@ -126,13 +132,13 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- File name row -->
-                    <Label Grid.Row="0" Grid.Column="0" Classes="heading" Content="File Name:"/>
+                    <Label Grid.Row="0" Grid.Column="0" Classes="heading" Content="{Binding FileName, Source={x:Static svc:LocalizationService.Current}}"/>
                     <Label Grid.Row="0" Grid.Column="1"
                            Content="{Binding FileName}"
                            Foreground="{DynamicResource TextPrimaryBrush}"/>
                     <Button Grid.Row="0" Grid.Column="1"
                             Classes="subtle"
-                            Content="Show"
+                            Content="{Binding Show, Source={x:Static svc:LocalizationService.Current}}"
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"
                             Command="{Binding ShowFullImageCommand}"
@@ -166,15 +172,6 @@
                                              Width="160" Height="4"
                                              HorizontalAlignment="Center"
                                              VerticalAlignment="Center"/>
-                                <Border Background="#B3F5DE8A"
-                                        BorderBrush="#66000000" BorderThickness="1"
-                                        CornerRadius="3" Padding="8 4"
-                                        HorizontalAlignment="Left" VerticalAlignment="Top"
-                                        Margin="8" IsHitTestVisible="False"
-                                        IsVisible="{Binding Title, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-                                    <TextBlock Text="{Binding Title}" Foreground="#222"
-                                               FontSize="13" FontWeight="SemiBold"/>
-                                </Border>
                                 <Border Background="{DynamicResource TagLabelBgBrush}"
                                         CornerRadius="4" Padding="4 2"
                                         HorizontalAlignment="Right" VerticalAlignment="Bottom"
@@ -188,13 +185,13 @@
 
                     <!-- Title row -->
                     <Label Grid.Row="2" Grid.Column="0" Classes="heading"
-                           Content="Title:" VerticalAlignment="Center" Margin="0 8 0 0"/>
+                           Content="{Binding Title, Source={x:Static svc:LocalizationService.Current}}" VerticalAlignment="Center" Margin="0 8 0 0"/>
                     <TextBox Grid.Row="2" Grid.Column="1" Classes="themed"
                              Text="{Binding Title}" Margin="0 8 0 0"/>
 
                     <!-- Scanned row -->
                     <Label Grid.Row="3" Grid.Column="0" Classes="heading"
-                           Content="Scanned:" VerticalAlignment="Center" Margin="0 8 0 0"/>
+                           Content="{Binding Scanned, Source={x:Static svc:LocalizationService.Current}}" VerticalAlignment="Center" Margin="0 8 0 0"/>
                     <Grid Grid.Row="3" Grid.Column="1" Margin="0 8 0 0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -206,7 +203,8 @@
                                          FilterMode="ContainsOrdinal"
                                          MinimumPrefixLength="0"
                                          MinimumPopulateDelay="0:0:0.05"/>
-                        <Button Grid.Column="1" Classes="subtle" Content="Use Recent"
+                        <Button Grid.Column="1" Classes="subtle"
+                                Content="{Binding UseRecent, Source={x:Static svc:LocalizationService.Current}}"
                                 Padding="10 5" Margin="5 0 0 0"
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                                 Command="{Binding UseRecentScannedCommand}"/>
@@ -214,68 +212,37 @@
 
                     <!-- Tags section -->
                     <Label Grid.Row="4" Grid.Column="0" Classes="heading"
-                           Content="Tags:" VerticalAlignment="Top" Margin="0 8 0 0"/>
+                           Content="{Binding Tags, Source={x:Static svc:LocalizationService.Current}}" VerticalAlignment="Center" Margin="0 8 0 0"/>
                     <Grid Grid.Row="4" Grid.Column="1" Margin="0 8 0 0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto" SharedSizeGroup="RightCol"/>
                         </Grid.ColumnDefinitions>
-                        <DockPanel Grid.Column="0" Grid.ColumnSpan="2" VerticalAlignment="Bottom" Margin="0 4 0 0"
-                                   LastChildFill="False">
-                            <TextBlock Text="Click on the image to add a tag" FontSize="10"
-                                       Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"
-                                       DockPanel.Dock="Bottom"/>
+                        <DockPanel Grid.Column="0">
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
+                                        Spacing="8" VerticalAlignment="Center">
+                                <RadioButton Name="TagModeNames" GroupName="TagMode"
+                                             Content="{Binding Names, Source={x:Static svc:LocalizationService.Current}}" IsChecked="True" FontSize="11"
+                                             Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <RadioButton Name="TagModeNumbers" GroupName="TagMode"
+                                             Content="{Binding Numbers, Source={x:Static svc:LocalizationService.Current}}" FontSize="11"
+                                             Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                <RadioButton Name="TagModeHidden" GroupName="TagMode"
+                                             Content="{Binding Hidden, Source={x:Static svc:LocalizationService.Current}}" FontSize="11"
+                                             Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding ClickToAddTag, Source={x:Static svc:LocalizationService.Current}}"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       VerticalAlignment="Center"
+                                       TextWrapping="Wrap"
+                                       Margin="0 0 8 0"/>
                         </DockPanel>
-                        <ListBox x:Name="TagsList" Grid.Column="0" Classes="themed"
-                                 ItemsSource="{Binding Tags}" Height="84"
-                                 Padding="0"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                 VerticalAlignment="Top">
-                            <ListBox.Styles>
-                                <Style Selector="ListBox#TagsList ListBoxItem">
-                                    <Setter Property="Padding" Value="4 0"/>
-                                    <Setter Property="MinHeight" Value="0"/>
-                                    <Setter Property="BorderThickness" Value="0"/>
-                                    <Setter Property="Margin" Value="0"/>
-                                </Style>
-                            </ListBox.Styles>
-                            <ListBox.ItemTemplate>
-                                <DataTemplate x:DataType="models:ImageTag">
-                                    <DockPanel>
-                                        <Button Classes="danger" Content="✕"
-                                                DockPanel.Dock="Right" Padding="5 0" Margin="5 0 0 0" MinHeight="0"
-                                                Command="{ReflectionBinding #TagsList.DataContext.RemoveTagCommand}"
-                                                CommandParameter="{Binding}"/>
-                                        <Button Classes="subtle" Content="✎"
-                                                DockPanel.Dock="Right" Padding="5 0" Margin="5 0 0 0" MinHeight="0"
-                                                Command="{ReflectionBinding #TagsList.DataContext.EditTagCommand}"
-                                                CommandParameter="{Binding}"/>
-                                        <TextBlock Text="{Binding Label}" VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource TextPrimaryBrush}"/>
-                                        <TextBlock Text="{Binding PositionDisplay}"
-                                                   Foreground="{DynamicResource TextMutedBrush}"
-                                                   FontSize="10" Margin="10 0 0 0" VerticalAlignment="Center"/>
-                                    </DockPanel>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                        <StackPanel Grid.Column="1" Margin="5 0 0 0" Spacing="2"
-                                    VerticalAlignment="Center" HorizontalAlignment="Center">
-                            <RadioButton Name="TagModeNames" GroupName="TagMode"
-                                         Content="Names" IsChecked="True" FontSize="11"
-                                         Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            <RadioButton Name="TagModeNumbers" GroupName="TagMode"
-                                         Content="Numbers" FontSize="11"
-                                         Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            <RadioButton Name="TagModeHidden" GroupName="TagMode"
-                                         Content="Hidden" FontSize="11"
-                                         Foreground="{DynamicResource TextSecondaryBrush}"/>
-                        </StackPanel>
                     </Grid>
 
                     <!-- Description + Save -->
                     <Label Grid.Row="5" Grid.Column="0" Classes="heading"
-                           Content="Description:" Margin="0 8 0 0" VerticalAlignment="Top"/>
+                           Content="{Binding Description, Source={x:Static svc:LocalizationService.Current}}" Margin="0 8 0 0" VerticalAlignment="Top"/>
                     <Grid Grid.Row="5" Grid.Column="1" Margin="0 8 0 0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -284,11 +251,11 @@
                         <TextBox Name="DescriptionBox" Grid.Column="0" Classes="themed"
                                  Text="{Binding Description}" TextWrapping="Wrap"
                                  AcceptsReturn="True"
-                                 Height="72" VerticalAlignment="Top"
+                                 Height="110" VerticalAlignment="Top"
                                  ScrollViewer.VerticalScrollBarVisibility="Auto"/>
                         <Button Grid.Column="1" Classes="success"
-                                Content="Save" Margin="5 0 0 0"
-                                Height="72"
+                                Content="{Binding Save, Source={x:Static svc:LocalizationService.Current}}" Margin="5 0 0 0"
+                                Height="110"
                                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                                 VerticalAlignment="Top" VerticalContentAlignment="Center"
                                 IsEnabled="{Binding IsModified}"

@@ -40,6 +40,12 @@ public partial class App : Application
             _ => AppTheme.OceanBlue
         };
         themeService.ApplyTheme(savedTheme);
+
+        LocalizationService.Current.Language = settings.Language switch
+        {
+            "Polish" => AppLanguage.Polish,
+            _ => AppLanguage.English
+        };
     }
 
     public override void OnFrameworkInitializationCompleted()

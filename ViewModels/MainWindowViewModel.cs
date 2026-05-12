@@ -41,7 +41,7 @@ public class MainWindowViewModel : ViewModelBase
     private bool _isGeneratingPdf;
     private int _pdfProgress;
     private int _pdfTotal;
-    private string _pdfStatusText = "Generating PDF...";
+    private bool _pdfSaving;
 
     #region Properties
 
@@ -89,6 +89,8 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand ShowAboutCommand {get; set;}
     public ICommand SwitchToOceanBlueCommand {get; set;}
     public ICommand SwitchToVioletCyanCommand {get; set;}
+    public ICommand SwitchToEnglishCommand {get; set;}
+    public ICommand SwitchToPolishCommand {get; set;}
 
     public bool IsLoading {
         get => _isLoading;
@@ -128,9 +130,16 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _pdfTotal, value);
     }
 
-    public string PdfStatusText {
-        get => _pdfStatusText;
-        set => this.RaiseAndSetIfChanged(ref _pdfStatusText, value);
+    public string PdfStatusText =>
+        _pdfSaving ? LocalizationService.Current.SavingPdf : LocalizationService.Current.GeneratingPdf;
+
+    private bool PdfSaving {
+        get => _pdfSaving;
+        set {
+            if (_pdfSaving == value) return;
+            _pdfSaving = value;
+            this.RaisePropertyChanged(nameof(PdfStatusText));
+        }
     }
 
     public ImageViewModel? SelectedImage
@@ -160,6 +169,16 @@ public class MainWindowViewModel : ViewModelBase
         GeneratePDFReportCommand = ReactiveCommand.CreateFromTask(async () => await GeneratePDFReportAsync());
         SwitchToOceanBlueCommand = ReactiveCommand.Create(() => SwitchTheme(AppTheme.OceanBlue));
         SwitchToVioletCyanCommand = ReactiveCommand.Create(() => SwitchTheme(AppTheme.VioletCyan));
+        SwitchToEnglishCommand = ReactiveCommand.Create(() => SwitchLanguage(AppLanguage.English));
+        SwitchToPolishCommand = ReactiveCommand.Create(() => SwitchLanguage(AppLanguage.Polish));
+
+        LocalizationService.Current.PropertyChanged += (_, _) => this.RaisePropertyChanged(nameof(PdfStatusText));
+    }
+
+    private void SwitchLanguage(AppLanguage lang) {
+        LocalizationService.Current.Language = lang;
+        _appSettings.Language = lang.ToString();
+        SettingsService.SaveSettings(_appSettings);
     }
 
     #region Methods
@@ -172,12 +191,12 @@ public class MainWindowViewModel : ViewModelBase
         IsGeneratingPdf = true;
         PdfProgress = 0;
         PdfTotal = 0;
-        PdfStatusText = "Generating PDF...";
+        PdfSaving = false;
         var progress = new Progress<(int current, int total)>(p => {
             PdfTotal = p.total;
             PdfProgress = p.current;
             if (p.total > 0 && p.current >= p.total) {
-                PdfStatusText = "Saving PDF...";
+                PdfSaving = true;
             }
         });
         string? path = null;

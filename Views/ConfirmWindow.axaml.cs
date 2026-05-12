@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Input;
+using ExifEditor.Services;
 
 namespace ExifEditor.Views;
 
@@ -7,7 +8,7 @@ public partial class ConfirmWindow : Window
 {
     public bool Confirmed { get; private set; }
 
-    public ConfirmWindow() : this("Are you sure?") {}
+    public ConfirmWindow() : this("") {}
 
     public ConfirmWindow(string message)
     {
@@ -16,6 +17,11 @@ public partial class ConfirmWindow : Window
         var yesButton = this.FindControl<Button>("YesButton")!;
         var noButton = this.FindControl<Button>("NoButton")!;
         var messageText = this.FindControl<TextBlock>("MessageText")!;
+
+        var loc = LocalizationService.Current;
+        Title = loc.Language == AppLanguage.Polish ? "Potwierdź" : "Confirm";
+        yesButton.Content = loc.Language == AppLanguage.Polish ? "Tak" : "Yes";
+        noButton.Content = loc.Language == AppLanguage.Polish ? "Nie" : "No";
 
         messageText.Text = message;
 

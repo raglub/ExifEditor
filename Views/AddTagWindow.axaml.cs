@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using ExifEditor.Services;
 using System.Linq;
 
 namespace ExifEditor.Views;
@@ -30,12 +31,12 @@ public partial class AddTagWindow : Window
 
         if (!string.IsNullOrEmpty(initialLabel))
         {
-            Title = "Edit Tag";
+            Title = LocalizationService.Current.EditTagTitle;
             labelBox.Text = initialLabel;
         }
         else
         {
-            Title = "Add Tag";
+            Title = LocalizationService.Current.AddTagTitle;
         }
 
         okButton.Click += (s, e) =>
