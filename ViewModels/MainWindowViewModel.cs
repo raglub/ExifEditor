@@ -170,10 +170,22 @@ public class MainWindowViewModel : ViewModelBase
             PdfTotal = p.total;
             PdfProgress = p.current;
         });
+        string? path = null;
         try {
-            await _pdfGenerator.GenerateReportAsync(_appSettings.DirPath, progress);
+            path = await _pdfGenerator.GenerateReportAsync(_appSettings.DirPath, progress);
         } finally {
             IsGeneratingPdf = false;
+        }
+
+        if (!string.IsNullOrEmpty(path) && File.Exists(path)) {
+            try {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo {
+                    FileName = path,
+                    UseShellExecute = true
+                });
+            } catch {
+                // ignore: PDF was generated, just couldn't open the system viewer
+            }
         }
     }
 

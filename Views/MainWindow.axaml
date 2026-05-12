@@ -143,6 +143,10 @@
                         <ListBox Classes="themed" DockPanel.Dock="Right"
                                  HorizontalAlignment="Right" Margin="8 0 0 0"
                                  ItemsSource="{Binding ImageProperties}" MaxWidth="200"/>
+                        <TextBlock x:Name="TagLegend" DockPanel.Dock="Bottom"
+                                   Margin="0 6 0 0" FontSize="11" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource TextSecondaryBrush}"
+                                   IsVisible="False"/>
                         <Border CornerRadius="{DynamicResource MediumRadius}" ClipToBounds="True"
                                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
                                 Margin="0 0 0 0">
@@ -255,12 +259,18 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                        <CheckBox Grid.Column="1" Name="ShowAllTagsCheckBox" Content="Show all tags"
-                                  FontSize="11" IsChecked="True"
-                                  Margin="5 0 0 0"
-                                  VerticalAlignment="Center"
-                                  HorizontalAlignment="Center"
-                                  Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        <StackPanel Grid.Column="1" Margin="5 0 0 0" Spacing="2"
+                                    VerticalAlignment="Center" HorizontalAlignment="Center">
+                            <RadioButton Name="TagModeNames" GroupName="TagMode"
+                                         Content="Names" IsChecked="True" FontSize="11"
+                                         Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <RadioButton Name="TagModeNumbers" GroupName="TagMode"
+                                         Content="Numbers" FontSize="11"
+                                         Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <RadioButton Name="TagModeHidden" GroupName="TagMode"
+                                         Content="Hidden" FontSize="11"
+                                         Foreground="{DynamicResource TextSecondaryBrush}"/>
+                        </StackPanel>
                     </Grid>
 
                     <!-- Description + Save -->

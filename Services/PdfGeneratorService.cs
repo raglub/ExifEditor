@@ -7,6 +7,7 @@ using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 public class PdfGeneratorService {
@@ -20,12 +21,13 @@ public class PdfGeneratorService {
         _serviceFactory = serviceFactory;
     }
 
-    public async Task GenerateReportAsync(string? dirPath, IProgress<(int current, int total)>? progress = null)
+    public async Task<string?> GenerateReportAsync(string? dirPath, IProgress<(int current, int total)>? progress = null)
     {
         var imagePaths = _directoryService.GetImagePaths(dirPath);
         var total = imagePaths.Count;
         progress?.Report((0, total));
 
+        string? outputPath = null;
         await Task.Run(() =>
         {
             Document.Create(container =>
@@ -57,7 +59,7 @@ public class PdfGeneratorService {
                 var processed = 0;
                 foreach(var imagePath in imagePaths) {
                     var imageService = _serviceFactory.CreateImageService(imagePath);
-                    var imageName = Path.GetFileNameWithoutExtension(imagePath);
+                    var imageName = Path.GetFileName(imagePath);
                     var descriptionData = DescriptionData.Deserialize(imageService.GetDescription());
                     container.Page(page =>
                     {
@@ -66,22 +68,11 @@ public class PdfGeneratorService {
                         page.PageColor(Colors.White);
                         page.DefaultTextStyle(x => x.FontSize(12));
 
-                        page.Header().Column(col =>
-                        {
-                            if (!string.IsNullOrWhiteSpace(descriptionData.Title))
-                            {
-                                col.Item()
-                                    .Background("#F5DE8A")
-                                    .Border(1).BorderColor("#80000000")
-                                    .PaddingVertical(4).PaddingHorizontal(8)
-                                    .Text(descriptionData.Title)
-                                    .SemiBold().FontSize(20).FontColor("#222222");
-                            }
-                            col.Item()
-                                .PaddingTop(descriptionData.Title is null ? 0 : 6)
-                                .Text($"Image: {imageName}")
-                                .Bold().FontSize(20).FontColor(Colors.Black);
-                        });
+                        page.Header()
+                            .PaddingBottom(4)
+                            .BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+                            .Text($"Image: {imageName}")
+                            .Bold().FontSize(18).FontColor(Colors.Black);
 
                         // A4 content area: 170mm wide x ~257mm tall (after 2cm margins + header/footer)
                         // Image zone: 2/3 of content height, description zone: 1/3
@@ -101,9 +92,8 @@ public class PdfGeneratorService {
                             {
                                 x.Spacing(8);
 
-                                // Image section — max 2/3 of page
-                                x.Item().Height(imageZoneHeight, Unit.Millimetre)
-                                    .AlignCenter().AlignMiddle()
+                                // Image section — shrinks to actual image size (max 2/3 of page).
+                                x.Item().AlignCenter()
                                     .Width(displayWidth, Unit.Millimetre)
                                     .Height(displayHeight, Unit.Millimetre)
                                     .Layers(layers =>
@@ -115,30 +105,39 @@ public class PdfGeneratorService {
 
                                         if (descriptionData.Tags is { Count: > 0 })
                                         {
+                                            var numberMap = descriptionData.Tags
+                                                .OrderBy(t => t.AnchorY).ThenBy(t => t.AnchorX)
+                                                .Select((t, i) => (t, i))
+                                                .ToDictionary(x => x.t, x => x.i + 1);
                                             layers.Layer()
                                                 .Canvas((canvas, size) =>
                                                 {
-                                                    DrawTagMarkers(canvas, size, descriptionData.Tags);
+                                                    DrawTagMarkers(canvas, size, descriptionData.Tags, numberMap);
                                                 });
                                         }
                                     });
 
-                                // Description section — remaining 1/3 of page
-                                if (!string.IsNullOrWhiteSpace(descriptionData.Scanned)) {
-                                    x.Item().Text(text => {
-                                        text.Span("Scanned: ").Bold();
-                                        text.Span($"{descriptionData.Scanned}");
-                                    });
+                                if (descriptionData.Tags is { Count: > 0 })
+                                {
+                                    var legend = string.Join("; ", descriptionData.Tags
+                                        .OrderBy(t => t.AnchorY).ThenBy(t => t.AnchorX)
+                                        .Select((t, i) => $"{i + 1} — {t.Label}"));
+                                    Section(x, "Legend", text => text.Span(legend).Italic());
                                 }
-                                x.Item().Text(text => {
-                                    text.Span("Description: ").Bold();
-                                    text.Span($"{descriptionData.Description}");
-                                });
-                                if (descriptionData.Tags is { Count: > 0 }) {
-                                    x.Item().Text("Tags:").Bold();
-                                    foreach (var tag in descriptionData.Tags) {
-                                        x.Item().Text($"  - {tag.Label} ({tag.AnchorX * 100:F0}%, {tag.AnchorY * 100:F0}%)");
-                                    }
+
+                                if (!string.IsNullOrWhiteSpace(descriptionData.Title))
+                                {
+                                    Section(x, "Title", text => text.Span(descriptionData.Title));
+                                }
+
+                                if (!string.IsNullOrWhiteSpace(descriptionData.Scanned))
+                                {
+                                    Section(x, "Scanned", text => text.Span(descriptionData.Scanned));
+                                }
+
+                                if (!string.IsNullOrWhiteSpace(descriptionData.Description))
+                                {
+                                    Section(x, "Description", text => text.Span(descriptionData.Description));
                                 }
                             });
 
@@ -155,49 +154,49 @@ public class PdfGeneratorService {
                     progress?.Report((processed, total));
                 }
             })
-            .GeneratePdf(Path.Combine(dirPath!, $"report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.pdf"));
+            .GeneratePdf(outputPath = Path.Combine(dirPath!, $"report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.pdf"));
         });
+        return outputPath;
     }
 
-    private static void DrawTagMarkers(SKCanvas canvas, Size size, List<ImageTag> tags)
+    private static void Section(ColumnDescriptor col, string heading, Action<TextDescriptor> body)
     {
-        var markerRadius = 4f;
+        col.Item()
+            .PaddingTop(6).PaddingBottom(3)
+            .BorderBottom(1).BorderColor(Colors.Grey.Lighten2)
+            .Text(heading).Bold().FontSize(14).FontColor(Colors.Black);
+        col.Item().PaddingTop(4).Text(body);
+    }
+
+    private static void DrawTagMarkers(SKCanvas canvas, Size size, List<ImageTag> tags, Dictionary<ImageTag, int>? numberMap = null)
+    {
+        var bubbleRadius = 5.5f;
 
         using var markerPaint = new SKPaint
         {
-            Color = new SKColor(88, 166, 255), // AccentColor
+            Color = new SKColor(0, 0, 0, 130), // semi-transparent dark
             IsAntialias = true,
             Style = SKPaintStyle.Fill
         };
 
-        using var strokePaint = new SKPaint
+        using var textHaloPaint = new SKPaint
         {
-            Color = SKColors.White,
+            Color = new SKColor(0, 0, 0, 200),
             IsAntialias = true,
+            TextSize = 7f,
+            TextAlign = SKTextAlign.Center,
+            FakeBoldText = true,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1.5f
-        };
-
-        using var labelBgPaint = new SKPaint
-        {
-            Color = new SKColor(22, 27, 34, 200), // TagLabelBgColor
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
+            StrokeWidth = 1.8f
         };
 
         using var labelTextPaint = new SKPaint
         {
             Color = SKColors.White,
             IsAntialias = true,
-            TextSize = 7f
-        };
-
-        using var linePaint = new SKPaint
-        {
-            Color = SKColors.White,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1f
+            TextSize = 7f,
+            TextAlign = SKTextAlign.Center,
+            FakeBoldText = true
         };
 
         foreach (var tag in tags)
@@ -205,32 +204,19 @@ public class PdfGeneratorService {
             var cx = (float)(tag.AnchorX * size.Width);
             var cy = (float)(tag.AnchorY * size.Height);
 
-            // Draw label with connector line
-            if (!string.IsNullOrEmpty(tag.Label))
+            var displayText = numberMap != null && numberMap.TryGetValue(tag, out var n)
+                ? n.ToString()
+                : tag.Label;
+
+            if (!string.IsNullOrEmpty(displayText))
             {
-                var labelX = cx + (float)(tag.EffectiveLabelOffsetX * size.Width);
-                var labelY = cy + (float)(tag.EffectiveLabelOffsetY * size.Height);
+                canvas.DrawCircle(cx, cy, bubbleRadius, markerPaint);
 
-                var textWidth = labelTextPaint.MeasureText(tag.Label);
-                var padding = 3f;
-                var rect = new SKRect(
-                    labelX - padding,
-                    labelY - labelTextPaint.TextSize - padding,
-                    labelX + textWidth + padding,
-                    labelY + padding);
-
-                // Draw line from marker to closest edge of label rect
-                var targetX = Math.Clamp(cx, rect.Left, rect.Right);
-                var targetY = Math.Clamp(cy, rect.Top, rect.Bottom);
-                canvas.DrawLine(cx, cy, targetX, targetY, linePaint);
-
-                canvas.DrawRoundRect(rect, 3, 3, labelBgPaint);
-                canvas.DrawText(tag.Label, labelX, labelY, labelTextPaint);
+                var metrics = labelTextPaint.FontMetrics;
+                var textY = cy - (metrics.Ascent + metrics.Descent) / 2;
+                canvas.DrawText(displayText, cx, textY, textHaloPaint);
+                canvas.DrawText(displayText, cx, textY, labelTextPaint);
             }
-
-            // Draw marker dot (on top of line)
-            canvas.DrawCircle(cx, cy, markerRadius, markerPaint);
-            canvas.DrawCircle(cx, cy, markerRadius, strokePaint);
         }
     }
 }

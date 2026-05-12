@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -16,14 +18,16 @@ public partial class MainWindow : Window
 {
     private INotifyCollectionChanged? _subscribedTags;
     private ImageViewModel? _subscribedImage;
-    private bool _showAllTags = true;
+
+    private enum TagDisplayMode { Names, Numbers, Hidden }
+    private TagDisplayMode _tagMode = TagDisplayMode.Names;
 
     private enum DragMode { None, DragDot, DragLabel }
     private DragMode _currentDragMode = DragMode.None;
     private ImageTag? _draggedTag;
     private bool _isDragging;
     private Point _dragStartPoint;
-    private Ellipse? _dragDot;
+    private Control? _dragDot;
     private Control? _dragLabel;
     private Line? _dragLine;
     private Ellipse? _dragHitArea;
@@ -60,13 +64,22 @@ public partial class MainWindow : Window
         if (File.Exists(iconPath))
             Icon = new WindowIcon(iconPath);
 
-        var showAllTagsCheckBox = this.FindControl<CheckBox>("ShowAllTagsCheckBox");
-        if (showAllTagsCheckBox != null)
+        var namesRadio = this.FindControl<RadioButton>("TagModeNames");
+        var numbersRadio = this.FindControl<RadioButton>("TagModeNumbers");
+        var hiddenRadio = this.FindControl<RadioButton>("TagModeHidden");
+        if (namesRadio != null && numbersRadio != null && hiddenRadio != null)
         {
-            showAllTagsCheckBox.Click += (s, e) =>
+            namesRadio.IsCheckedChanged += (s, e) =>
             {
-                _showAllTags = showAllTagsCheckBox.IsChecked ?? true;
-                UpdateTagMarkers();
+                if (namesRadio.IsChecked == true) { _tagMode = TagDisplayMode.Names; UpdateTagMarkers(); }
+            };
+            numbersRadio.IsCheckedChanged += (s, e) =>
+            {
+                if (numbersRadio.IsChecked == true) { _tagMode = TagDisplayMode.Numbers; UpdateTagMarkers(); }
+            };
+            hiddenRadio.IsCheckedChanged += (s, e) =>
+            {
+                if (hiddenRadio.IsChecked == true) { _tagMode = TagDisplayMode.Hidden; UpdateTagMarkers(); }
             };
         }
 
@@ -366,15 +379,37 @@ public partial class MainWindow : Window
         var canvas = this.FindControl<Canvas>("TagCanvas");
         var panel = this.FindControl<Panel>("ImageTagPanel");
         var image = this.FindControl<Image>("PreviewImage");
+        var legend = this.FindControl<TextBlock>("TagLegend");
         if (canvas == null || panel == null || image == null) return;
 
         canvas.Children.Clear();
+        if (legend != null) { legend.Text = null; legend.IsVisible = false; }
 
         var viewModel = (DataContext as MainWindowViewModel)?.SelectedImage;
         if (viewModel == null) return;
 
         var layout = GetImageLayout();
         if (!layout.isValid) return;
+
+        // Build per-tag number map when in Numbers mode: top-to-bottom, left-to-right.
+        Dictionary<ImageTag, int>? numberMap = null;
+        if (_tagMode == TagDisplayMode.Numbers && viewModel.Tags.Count > 0)
+        {
+            numberMap = viewModel.Tags
+                .OrderBy(t => t.AnchorY).ThenBy(t => t.AnchorX)
+                .Select((t, i) => (t, i))
+                .ToDictionary(x => x.t, x => x.i + 1);
+
+            if (legend != null)
+            {
+                legend.Text = string.Join("; ", numberMap
+                    .OrderBy(kv => kv.Value)
+                    .Select(kv => $"{kv.Value} — {kv.Key.Label}"));
+                legend.IsVisible = true;
+            }
+        }
+
+        var labelsVisible = _tagMode != TagDisplayMode.Hidden;
 
         foreach (var tag in viewModel.Tags)
         {
@@ -387,42 +422,71 @@ public partial class MainWindow : Window
             var tagMarkerStrokeBrush = this.FindResource("TagMarkerStrokeBrush") as IBrush ?? new SolidColorBrush(Colors.White);
             var tagLabelBgBrush = this.FindResource("TagLabelBgBrush") as IBrush ?? new SolidColorBrush(Color.FromArgb(200, 0, 0, 0));
 
+            var inNumbersMode = numberMap != null;
+
             // Scale sizes inversely with zoom so they stay readable
-            var markerSize = 8.0 / _zoom;
-            var hitAreaSize = 20.0 / _zoom;
+            var markerSize = (inNumbersMode ? 20.0 : 8.0) / _zoom;
+            var hitAreaSize = Math.Max(20.0 / _zoom, markerSize);
             var fontSize = 10.0 / _zoom;
             var labelPadH = 4.0 / _zoom;
             var labelPadV = 2.0 / _zoom;
 
-            // 1. Connector line — single white stroke with slight opacity so it
-            //    stays readable on both light and dark backgrounds.
+            var displayText = inNumbersMode && numberMap!.TryGetValue(tag, out var n)
+                ? n.ToString()
+                : tag.Label;
+
+            // 1. Connector line — hidden in Numbers mode.
             var line = new Line
             {
                 StartPoint = new Point(dotX, dotY),
-                EndPoint = new Point(labelX, labelY), // updated below after label measure
+                EndPoint = new Point(labelX, labelY),
                 Stroke = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255)),
                 StrokeThickness = 1.5 / _zoom,
                 StrokeLineCap = PenLineCap.Round,
                 IsHitTestVisible = false,
-                IsVisible = _showAllTags
+                IsVisible = labelsVisible && !inNumbersMode
             };
             canvas.Children.Add(line);
 
-            // 2. Dot marker
-            var dot = new Ellipse
+            // 2. Dot / number bubble marker
+            Control dot;
+            if (inNumbersMode)
             {
-                Width = markerSize,
-                Height = markerSize,
-                Fill = tagMarkerBrush,
-                Stroke = tagMarkerStrokeBrush,
-                StrokeThickness = 1.0 / _zoom,
-                IsHitTestVisible = false
-            };
+                dot = new Border
+                {
+                    Width = markerSize,
+                    Height = markerSize,
+                    Background = tagMarkerBrush,
+                    BorderBrush = tagMarkerStrokeBrush,
+                    BorderThickness = new Thickness(1.5 / _zoom),
+                    CornerRadius = new CornerRadius(markerSize / 2),
+                    IsHitTestVisible = false,
+                    Child = new TextBlock
+                    {
+                        Text = displayText,
+                        Foreground = Brushes.White,
+                        FontSize = fontSize,
+                        FontWeight = FontWeight.Bold,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                    }
+                };
+            }
+            else
+            {
+                dot = new Ellipse
+                {
+                    Width = markerSize,
+                    Height = markerSize,
+                    Fill = tagMarkerBrush,
+                    Stroke = tagMarkerStrokeBrush,
+                    StrokeThickness = 1.0 / _zoom,
+                    IsHitTestVisible = false
+                };
+            }
             Canvas.SetLeft(dot, dotX - markerSize / 2);
             Canvas.SetTop(dot, dotY - markerSize / 2);
             canvas.Children.Add(dot);
-
-            // 3. Label (directly positioned on canvas)
             var labelText = new TextBlock
             {
                 Text = tag.Label,
@@ -447,6 +511,7 @@ public partial class MainWindow : Window
                 Margin = iconMargin,
                 Cursor = iconCursor,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                IsVisible = false,
                 Child = new TextBlock
                 {
                     Text = "✎",
@@ -464,6 +529,7 @@ public partial class MainWindow : Window
                 Margin = iconMargin,
                 Cursor = iconCursor,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                IsVisible = false,
                 Child = new TextBlock
                 {
                     Text = "✕",
@@ -484,8 +550,13 @@ public partial class MainWindow : Window
             var labelStack = new StackPanel
             {
                 Orientation = Avalonia.Layout.Orientation.Horizontal,
-                Children = { labelText, editIcon, deleteIcon }
+                Children = { labelText }
             };
+            if (!inNumbersMode)
+            {
+                labelStack.Children.Add(editIcon);
+                labelStack.Children.Add(deleteIcon);
+            }
 
             var label = new Border
             {
@@ -495,10 +566,72 @@ public partial class MainWindow : Window
                 CornerRadius = new CornerRadius(8.0 / _zoom),
                 Padding = new Thickness(labelPadH + 2.0 / _zoom, labelPadV + 1.0 / _zoom),
                 Child = labelStack,
-                IsHitTestVisible = true,
+                IsHitTestVisible = !inNumbersMode,
                 Cursor = new Cursor(StandardCursorType.SizeAll),
-                IsVisible = _showAllTags
+                IsVisible = labelsVisible && !inNumbersMode
             };
+
+            // Show edit/delete icons only while hovering the label.
+            label.PointerEntered += (s, e) =>
+            {
+                if (inNumbersMode) return;
+                editIcon.IsVisible = true;
+                deleteIcon.IsVisible = true;
+            };
+            label.PointerExited += (s, e) =>
+            {
+                if (inNumbersMode) return;
+                editIcon.IsVisible = false;
+                deleteIcon.IsVisible = false;
+            };
+
+            // In Numbers mode add a floating icon strip next to the bubble.
+            Border? numberIconsPanel = null;
+            if (inNumbersMode)
+            {
+                var iconsStack = new StackPanel
+                {
+                    Orientation = Avalonia.Layout.Orientation.Horizontal,
+                    Spacing = 2.0 / _zoom
+                };
+                editIcon.IsVisible = true;
+                deleteIcon.IsVisible = true;
+                editIcon.Margin = new Thickness(0);
+                deleteIcon.Margin = new Thickness(2.0 / _zoom, 0, 0, 0);
+                editIcon.Width = markerSize;
+                editIcon.Height = markerSize;
+                deleteIcon.Width = markerSize;
+                deleteIcon.Height = markerSize;
+                editIcon.CornerRadius = new CornerRadius(markerSize / 2);
+                deleteIcon.CornerRadius = new CornerRadius(markerSize / 2);
+                editIcon.Padding = new Thickness(0);
+                deleteIcon.Padding = new Thickness(0);
+                if (editIcon.Child is TextBlock editTb)
+                {
+                    editTb.FontSize = fontSize * 1.4;
+                    editTb.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
+                }
+                if (deleteIcon.Child is TextBlock delTb)
+                {
+                    delTb.FontSize = fontSize * 1.4;
+                    delTb.HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center;
+                }
+                iconsStack.Children.Add(editIcon);
+                iconsStack.Children.Add(deleteIcon);
+
+                numberIconsPanel = new Border
+                {
+                    Background = tagLabelBgBrush,
+                    CornerRadius = new CornerRadius(6.0 / _zoom),
+                    Padding = new Thickness(3.0 / _zoom, 2.0 / _zoom),
+                    Child = iconsStack,
+                    IsVisible = false,
+                    IsHitTestVisible = true
+                };
+                Canvas.SetLeft(numberIconsPanel, dotX + hitAreaSize / 2);
+                Canvas.SetTop(numberIconsPanel, dotY - markerSize / 2);
+                canvas.Children.Add(numberIconsPanel);
+            }
 
             var capturedTagForIcons = tag;
             editIcon.PointerPressed += async (s, e) =>
@@ -539,6 +672,10 @@ public partial class MainWindow : Window
                 Fill = Brushes.Transparent,
                 Cursor = new Cursor(StandardCursorType.SizeAll)
             };
+            if (inNumbersMode)
+            {
+                ToolTip.SetTip(dotHitArea, tag.Label);
+            }
             Canvas.SetLeft(dotHitArea, dotX - hitAreaSize / 2);
             Canvas.SetTop(dotHitArea, dotY - hitAreaSize / 2);
 
@@ -576,7 +713,10 @@ public partial class MainWindow : Window
                     var dx = currentPoint.X - _dragStartPoint.X;
                     var dy = currentPoint.Y - _dragStartPoint.Y;
                     if (Math.Sqrt(dx * dx + dy * dy) > 3)
+                    {
                         _isDragging = true;
+                        dotHitArea.Cursor = new Cursor(StandardCursorType.DragMove);
+                    }
                 }
 
                 if (_isDragging)
@@ -610,6 +750,7 @@ public partial class MainWindow : Window
 
             dotHitArea.PointerReleased += (s, e) =>
             {
+                dotHitArea.Cursor = new Cursor(StandardCursorType.SizeAll);
                 if (_draggedTag == capturedTag && _currentDragMode == DragMode.DragDot)
                 {
                     if (_isDragging)
@@ -653,7 +794,10 @@ public partial class MainWindow : Window
                     var dx = currentPoint.X - _dragStartPoint.X;
                     var dy = currentPoint.Y - _dragStartPoint.Y;
                     if (Math.Sqrt(dx * dx + dy * dy) > 3)
+                    {
                         _isDragging = true;
+                        label.Cursor = new Cursor(StandardCursorType.DragMove);
+                    }
                 }
 
                 if (_isDragging)
@@ -675,6 +819,7 @@ public partial class MainWindow : Window
 
             label.PointerReleased += (s, e) =>
             {
+                label.Cursor = new Cursor(StandardCursorType.SizeAll);
                 if (_draggedTag == capturedTag && _currentDragMode == DragMode.DragLabel)
                 {
                     if (_isDragging)
@@ -696,23 +841,40 @@ public partial class MainWindow : Window
                 e.Handled = true;
             };
 
-            // Show/hide on hover when "Show all tags" is unchecked
+            // Show on hover when labels are globally hidden.
+            // Or, in Numbers mode, show the floating icon strip on hover.
+            bool overDot = false, overIcons = false;
+            void RefreshNumbersHover()
+            {
+                if (numberIconsPanel != null)
+                    numberIconsPanel.IsVisible = overDot || overIcons;
+            }
+
             dotHitArea.PointerEntered += (s, e) =>
             {
-                if (!_showAllTags)
+                overDot = true;
+                if (_tagMode == TagDisplayMode.Hidden)
                 {
                     capturedLabel.IsVisible = true;
                     capturedLine.IsVisible = capturedLineNeeded;
                 }
+                RefreshNumbersHover();
             };
             dotHitArea.PointerExited += (s, e) =>
             {
-                if (!_showAllTags && !_isDragging)
+                overDot = false;
+                if (_tagMode == TagDisplayMode.Hidden && !_isDragging)
                 {
                     capturedLabel.IsVisible = false;
                     capturedLine.IsVisible = false;
                 }
+                RefreshNumbersHover();
             };
+            if (numberIconsPanel != null)
+            {
+                numberIconsPanel.PointerEntered += (s, e) => { overIcons = true; RefreshNumbersHover(); };
+                numberIconsPanel.PointerExited += (s, e) => { overIcons = false; RefreshNumbersHover(); };
+            }
 
             canvas.Children.Add(dotHitArea);
         }
