@@ -41,6 +41,7 @@ public class MainWindowViewModel : ViewModelBase
     private bool _isGeneratingPdf;
     private int _pdfProgress;
     private int _pdfTotal;
+    private string _pdfStatusText = "Generating PDF...";
 
     #region Properties
 
@@ -127,6 +128,11 @@ public class MainWindowViewModel : ViewModelBase
         set => this.RaiseAndSetIfChanged(ref _pdfTotal, value);
     }
 
+    public string PdfStatusText {
+        get => _pdfStatusText;
+        set => this.RaiseAndSetIfChanged(ref _pdfStatusText, value);
+    }
+
     public ImageViewModel? SelectedImage
     {
         get {
@@ -166,9 +172,13 @@ public class MainWindowViewModel : ViewModelBase
         IsGeneratingPdf = true;
         PdfProgress = 0;
         PdfTotal = 0;
+        PdfStatusText = "Generating PDF...";
         var progress = new Progress<(int current, int total)>(p => {
             PdfTotal = p.total;
             PdfProgress = p.current;
+            if (p.total > 0 && p.current >= p.total) {
+                PdfStatusText = "Saving PDF...";
+            }
         });
         string? path = null;
         try {

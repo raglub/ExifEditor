@@ -313,7 +313,7 @@
                 TrackBrush="{DynamicResource SurfaceBrush}"
                 IndicatorBrush="{DynamicResource AccentBrush}"
                 TextBrush="{DynamicResource TextPrimaryBrush}"/>
-            <TextBlock Text="Generating PDF..."
+            <TextBlock Text="{Binding PdfStatusText}"
                        Foreground="{DynamicResource TextPrimaryBrush}"
                        FontSize="14"
                        HorizontalAlignment="Center"/>
