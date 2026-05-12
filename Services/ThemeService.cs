@@ -9,7 +9,8 @@ namespace ExifEditor.Services;
 public enum AppTheme
 {
     OceanBlue,
-    VioletCyan
+    VioletCyan,
+    Light
 }
 
 public class ThemeService
@@ -17,7 +18,8 @@ public class ThemeService
     private static readonly Dictionary<AppTheme, Uri> ThemeUris = new()
     {
         { AppTheme.OceanBlue, new Uri("avares://ExifEditor/Themes/OceanBlueTheme.axaml") },
-        { AppTheme.VioletCyan, new Uri("avares://ExifEditor/Themes/VioletCyanTheme.axaml") }
+        { AppTheme.VioletCyan, new Uri("avares://ExifEditor/Themes/VioletCyanTheme.axaml") },
+        { AppTheme.Light, new Uri("avares://ExifEditor/Themes/LightTheme.axaml") }
     };
 
     private ResourceInclude? _currentThemeResource;
@@ -40,6 +42,10 @@ public class ThemeService
         };
         app.Resources.MergedDictionaries.Add(_currentThemeResource);
 
+        app.RequestedThemeVariant = theme == AppTheme.Light
+            ? ThemeVariant.Light
+            : ThemeVariant.Dark;
+
         CurrentTheme = theme;
     }
 
@@ -53,6 +59,7 @@ public class ThemeService
     {
         AppTheme.OceanBlue => "Ocean Blue",
         AppTheme.VioletCyan => "Violet Cyan",
+        AppTheme.Light => "Light",
         _ => theme.ToString()
     };
 }

@@ -27,6 +27,7 @@
                 <Separator/>
                 <MenuItem Header="{Binding MenuThemeOcean, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding SwitchToOceanBlueCommand}"/>
                 <MenuItem Header="{Binding MenuThemeViolet, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding SwitchToVioletCyanCommand}"/>
+                <MenuItem Header="{Binding MenuThemeLight, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding SwitchToLightCommand}"/>
                 <Separator/>
                 <MenuItem Header="{Binding MenuLanguage, Source={x:Static svc:LocalizationService.Current}}">
                     <MenuItem Header="{Binding MenuLanguageEnglish, Source={x:Static svc:LocalizationService.Current}}" Command="{Binding SwitchToEnglishCommand}"/>

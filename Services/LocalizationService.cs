@@ -34,6 +34,7 @@ public class LocalizationService : INotifyPropertyChanged
     public string MenuGeneratePdf => T("Generate PDF Report", "Wygeneruj raport PDF");
     public string MenuThemeOcean => T("Theme: Ocean Blue", "Motyw: Ocean Blue");
     public string MenuThemeViolet => T("Theme: Violet Cyan", "Motyw: Violet Cyan");
+    public string MenuThemeLight => T("Theme: Light", "Motyw: Jasny");
     public string MenuLanguage => T("Language", "Język");
     public string MenuLanguageEnglish => T("English", "Angielski");
     public string MenuLanguagePolish => T("Polish", "Polski");

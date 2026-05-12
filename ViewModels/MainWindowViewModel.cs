@@ -89,6 +89,7 @@ public class MainWindowViewModel : ViewModelBase
     public ICommand ShowAboutCommand {get; set;}
     public ICommand SwitchToOceanBlueCommand {get; set;}
     public ICommand SwitchToVioletCyanCommand {get; set;}
+    public ICommand SwitchToLightCommand {get; set;}
     public ICommand SwitchToEnglishCommand {get; set;}
     public ICommand SwitchToPolishCommand {get; set;}
 
@@ -169,6 +170,7 @@ public class MainWindowViewModel : ViewModelBase
         GeneratePDFReportCommand = ReactiveCommand.CreateFromTask(async () => await GeneratePDFReportAsync());
         SwitchToOceanBlueCommand = ReactiveCommand.Create(() => SwitchTheme(AppTheme.OceanBlue));
         SwitchToVioletCyanCommand = ReactiveCommand.Create(() => SwitchTheme(AppTheme.VioletCyan));
+        SwitchToLightCommand = ReactiveCommand.Create(() => SwitchTheme(AppTheme.Light));
         SwitchToEnglishCommand = ReactiveCommand.Create(() => SwitchLanguage(AppLanguage.English));
         SwitchToPolishCommand = ReactiveCommand.Create(() => SwitchLanguage(AppLanguage.Polish));
 

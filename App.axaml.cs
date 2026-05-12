@@ -37,6 +37,7 @@ public partial class App : Application
         var savedTheme = settings.Theme switch
         {
             "VioletCyan" => AppTheme.VioletCyan,
+            "Light" => AppTheme.Light,
             _ => AppTheme.OceanBlue
         };
         themeService.ApplyTheme(savedTheme);
